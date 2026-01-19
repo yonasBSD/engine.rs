@@ -45,19 +45,19 @@ test:
   pipelight logs -vv
 
 lint:
-  task dist:lint
+  task lint
 
 format:
-  task dist:format
+  task format
 
 audit:
-  task dist:audit
+  task audit
 
 coverage:
-  task dist:audit:code-coverage
+  task audit:code-coverage
 
 clean:
-  task dist:clean
+  task clean
 
 @doctor:
   echo "\n\n=== Just Doctor ===\n\n"
@@ -104,4 +104,4 @@ install:
   mise install
 
 help:
-  task dist:help
+  task help

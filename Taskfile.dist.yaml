@@ -1,5 +1,19 @@
 version: '3'
 
+env:
+  #ENV: dev
+  #ENV: testing
+  #ENV: staging
+  ENV: production
+
+dotenv: ['.env', '{{ .taskEnv }}']
+
+includes:
+  # Local, repo-specific tasks
+  local:
+    taskfile: Taskfile.local.yaml
+    optional: true  # Prevents errors if the local file is missing
+
 vars:
   project: Hello World
   homepage: https://example.com
@@ -105,7 +119,7 @@ tasks:
     run: always
     cmds:
       - for: sources
-        cmd: task dist:run:venom:test -- {{ .ITEM }}
+        cmd: task run:venom:test -- {{ .ITEM }}
 
   run:venom:test:
     desc: Run a venom test
@@ -123,7 +137,7 @@ tasks:
     run: always
     cmds:
       - for: sources
-        cmd: task dist:run:hurl:test -- {{ .ITEM }}
+        cmd: task run:hurl:test -- {{ .ITEM }}
 
   run:hurl:test:
     desc: Run a hurl test
