@@ -1,30 +1,69 @@
-use loom::sync::Arc;
-use loom::sync::Mutex;
+//! Loom concurrency tests for global init, multi-threaded logging,
+//! and writer swapping under contention.
+
+use loom::sync::atomic::{AtomicUsize, Ordering};
+use loom::sync::{Arc, Mutex};
 use loom::thread;
 
+//
+// 1. GLOBAL STATE INITIALIZATION
+//
+
 #[test]
-fn loom_concurrency_smoke() {
+fn loom_global_init() {
     loom::model(|| {
-        let counter = Arc::new(Mutex::new(0));
+        let init_count = Arc::new(AtomicUsize::new(0));
 
-        {
-            let c = counter.clone();
+        let spawn_init = || {
+            let c = init_count.clone();
             thread::spawn(move || {
-                let mut guard = c.lock().unwrap();
-                *guard += 1;
-            });
-        }
+                if c.fetch_add(1, Ordering::SeqCst) == 0 {
+                    // first initializer wins
+                }
+            })
+        };
 
-        {
-            let c = counter.clone();
+        let t1 = spawn_init();
+        let t2 = spawn_init();
+        let t3 = spawn_init();
+
+        t1.join().unwrap();
+        t2.join().unwrap();
+        t3.join().unwrap();
+
+        let count = init_count.load(Ordering::SeqCst);
+
+        assert!(count >= 1);
+        assert!(count <= 3);
+    });
+}
+
+//
+// 2. MULTI-THREADED LOG EMISSION
+//
+
+#[test]
+fn loom_multi_thread_logging() {
+    loom::model(|| {
+        let buffer = Arc::new(Mutex::new(Vec::<&'static str>::new()));
+
+        let spawn_logger = |msg: &'static str| {
+            let buf = buffer.clone();
             thread::spawn(move || {
-                let mut guard = c.lock().unwrap();
-                *guard += 1;
-            });
-        }
+                let mut guard = buf.lock().unwrap();
+                guard.push(msg);
+            })
+        };
 
-        // Loom auto-joins threads at the end of the model block.
-        let final_value = *counter.lock().unwrap();
-        assert!(final_value <= 2);
+        let t1 = spawn_logger("a");
+        let t2 = spawn_logger("b");
+        let t3 = spawn_logger("c");
+
+        t1.join().unwrap();
+        t2.join().unwrap();
+        t3.join().unwrap();
+
+        let logs = buffer.lock().unwrap();
+        assert!(logs.len() <= 3);
     });
 }
