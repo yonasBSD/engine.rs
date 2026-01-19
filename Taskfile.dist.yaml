@@ -105,7 +105,7 @@ tasks:
     run: always
     cmds:
       - for: sources
-        cmd: task run:venom:test -- {{ .ITEM }}
+        cmd: task dist:run:venom:test -- {{ .ITEM }}
 
   run:venom:test:
     desc: Run a venom test
@@ -123,7 +123,7 @@ tasks:
     run: always
     cmds:
       - for: sources
-        cmd: task run:hurl:test -- {{ .ITEM }}
+        cmd: task dist:run:hurl:test -- {{ .ITEM }}
 
   run:hurl:test:
     desc: Run a hurl test

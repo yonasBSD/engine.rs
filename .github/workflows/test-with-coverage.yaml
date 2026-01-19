@@ -92,7 +92,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           run: |
-            task test
+            task dist:test
 
       - name: Generate test results and coverage report
         uses: yonasBSD/toolkit@9067fa17c79d97c3bad28da5ebba1d3c32ab3582 # v0.1.0
@@ -111,7 +111,7 @@ jobs:
           files: results.xml
 
       # FIXME: https://github.com/yonasBSD/engine.rs/issues/85
-      #- name: Run xtask coverage
+      #- name: Run xtask dist:coverage
       #  uses: actions-rs/cargo@844f36862e911db73fe0815f00a4a2602c279505 # v1.0.3
       #  env:
       #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
