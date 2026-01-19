@@ -1,0 +1,72 @@
+version: '3'
+
+vars:
+  MODELS_PATH: 'engines/yonasBSD/models'
+
+tasks:
+  validate-all:
+    desc: Run format, check, and test on all workspaces
+    silent: true
+    cmds:
+      - task: fmt-all
+      - task: lint-all
+      - task: check-all
+      - task: test-all
+
+  check-all:
+    desc: Run cargo check on every model/features/ root
+    silent: true
+    cmds:
+      - |
+        for ws in $(find {{.MODELS_PATH}} -name "Cargo.toml" -path "*/features/Cargo.toml"); do
+          dir=$(dirname "$ws")
+          echo "Checking workspace in $dir"
+          cd "$dir" && cargo check --workspace
+          cd - > /dev/null
+        done
+
+  fmt-all:
+    desc: Run cargo fmt on every model/features/ root
+    silent: true
+    cmds:
+      - |
+        for ws in $(find {{.MODELS_PATH}} -name "Cargo.toml" -path "*/features/Cargo.toml"); do
+          dir=$(dirname "$ws")
+          echo "Formatting workspace in $dir"
+          cd "$dir" && cargo fmt --all
+          cd - > /dev/null
+        done
+
+  lint-all:
+    desc: Run clippy on all workspaces
+    silent: true
+    cmds:
+      - |
+        for ws in $(find {{.MODELS_PATH}} -name "Cargo.toml" -path "*/features/Cargo.toml"); do
+        dir=$(dirname "$ws")
+        echo "Linting $dir"
+        cd "$dir" && cargo clippy --workspace -- -D warnings
+        cd - > /dev/null
+        done
+
+  test-all:
+    desc: Run all unit and integration tests across the models
+    cmds:
+      - |
+        for ws in $(find {{.MODELS_PATH}} -name "Cargo.toml" -path "*/features/Cargo.toml"); do
+          dir=$(dirname "$ws")
+          echo "Testing workspace in $dir"
+          cd "$dir" && cargo test --workspace -- --nocapture
+          cd - > /dev/null
+        done
+
+  clean-all:
+    desc: Remove target directories for all models
+    silent: true
+    cmds:
+      - |
+        for ws in $(find {{.MODELS_PATH}} -name "Cargo.toml" -path "*/features/Cargo.toml"); do
+          dir=$(dirname "$ws")
+          cd "$dir" && cargo clean
+          cd - > /dev/null
+        done

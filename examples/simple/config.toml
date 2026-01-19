@@ -1,0 +1,5 @@
+project_name = "abc"
+
+[[readme]]
+path = "engines/abc"
+file = "readme/engines.md.tpl"
