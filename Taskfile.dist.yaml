@@ -185,7 +185,7 @@ tasks:
   test:loom:
     desc: "Run loom concurrency tests (must be single-threaded)"
     cmds:
-      - RUST_TEST_THREADS=1 cargo test --test concurrency_loom -- --nocapture
+      - task: test:code:loom
 
   test:all:
     desc: "Run full test suite: snapshots, nextest, loom"

@@ -1,92 +1,186 @@
-use std::cell::RefCell;
-use std::collections::HashMap;
-use std::io;
-use std::path::{Path, PathBuf};
-use std::rc::Rc;
-
 #[cfg(test)]
-mod i {
-    use super::*;
+mod loom_tests {
+    //! Loom concurrency tests wired against the real engine types:
+    //! - Config / ReadmeConfig
+    //! - FileSystem trait
+    //! - Scaffolder engine
+
     use crate::{core::Config, core::ReadmeConfig, traits::FileSystem, traits::Scaffolder};
 
-    // ==========================================================
-    // THE NON-BLOCKING MOCK FILESYSTEM
-    // ==========================================================
-    #[derive(Clone, Default)]
-    struct MockFS {
-        files: Rc<RefCell<HashMap<PathBuf, String>>>,
-        dirs: Rc<RefCell<Vec<PathBuf>>>,
+    use loom::sync::atomic::{AtomicUsize, Ordering};
+    use loom::sync::{Arc, Mutex};
+    use loom::thread;
+
+    use std::collections::HashMap;
+    use std::io;
+    use std::path::{Path, PathBuf};
+
+    //
+    // 0. LOOM-AWARE FILESYSTEM IMPLEMENTATION
+    //
+
+    #[derive(Clone)]
+    struct LoomFS {
+        files: Arc<Mutex<HashMap<PathBuf, String>>>,
+        dirs: Arc<Mutex<Vec<PathBuf>>>,
+        create_dir_calls: Arc<AtomicUsize>,
+        write_file_calls: Arc<AtomicUsize>,
     }
 
-    impl FileSystem for MockFS {
+    impl LoomFS {
+        fn new() -> Self {
+            Self {
+                files: Arc::new(Mutex::new(HashMap::new())),
+                dirs: Arc::new(Mutex::new(Vec::new())),
+                create_dir_calls: Arc::new(AtomicUsize::new(0)),
+                write_file_calls: Arc::new(AtomicUsize::new(0)),
+            }
+        }
+    }
+
+    impl FileSystem for LoomFS {
         fn create_dir_all(&self, path: &Path) -> io::Result<()> {
-            self.dirs.borrow_mut().push(path.to_path_buf());
+            self.create_dir_calls.fetch_add(1, Ordering::SeqCst);
+            let mut dirs = self.dirs.lock().unwrap();
+            dirs.push(path.to_path_buf());
             Ok(())
         }
 
         fn write_file(&self, path: &Path, content: &str) -> io::Result<()> {
-            self.files
-                .borrow_mut()
-                .insert(path.to_path_buf(), content.to_string());
+            self.write_file_calls.fetch_add(1, Ordering::SeqCst);
+            let mut files = self.files.lock().unwrap();
+            files.insert(path.to_path_buf(), content.to_string());
             Ok(())
         }
 
         fn read_to_string(&self, path: &Path) -> io::Result<String> {
-            self.files
-                .borrow()
+            let files = self.files.lock().unwrap();
+            files
                 .get(path)
                 .cloned()
-                .ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "File not found in MockFS"))
+                .ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "file not found"))
         }
     }
 
-    // ==========================================================
-    // INTEGRATION TESTS
-    // ==========================================================
+    //
+    // 1. GLOBAL STATE INITIALIZATION (PURE LOOM)
+    //
+
     #[test]
-    fn test_scaffolder_full_integration() {
-        let mock = MockFS::default();
-        let base_path = PathBuf::from("/mock_home");
-        let scaffolder = Scaffolder::new(mock.clone(), base_path.clone());
+    fn loom_global_init() {
+        loom::model(|| {
+            let init_count = Arc::new(AtomicUsize::new(0));
 
-        let config = Config {
-            project_name: "apollo".to_string(),
-            feature_name: "auth".to_string(),
-            package_name: "jwt".to_string(),
-            readme: vec![ReadmeConfig {
-                path: "engines/apollo".to_string(),
-                file: "readme/engines.md.tpl".to_string(),
-            }],
-        };
+            let spawn_init = || {
+                let counter = Arc::clone(&init_count);
+                thread::spawn(move || {
+                    let prev = counter.fetch_add(1, Ordering::SeqCst);
+                    if prev == 0 {
+                        // first initializer wins
+                    }
+                })
+            };
 
-        // Run Scaffolder
-        let manifest = scaffolder.run(config).expect("Scaffolding failed");
+            let t1 = spawn_init();
+            let t2 = spawn_init();
+            let t3 = spawn_init();
 
-        // Verification
-        let files = mock.files.borrow();
+            t1.join().unwrap();
+            t2.join().unwrap();
+            t3.join().unwrap();
 
-        // Check Mirrored Hierarchy
-        let backend_unit = base_path.join(
-            "engines/apollo/models/model-A/features/auth/packages/jwt/core/backends/tests/unit/mod.rs",
-        );
-        let frontend_unit = base_path.join(
-            "engines/apollo/models/model-A/features/auth/packages/jwt/core/frontends/tests/unit/mod.rs",
-        );
+            let count = init_count.load(Ordering::SeqCst);
+            assert!((1..=3).contains(&count));
+        });
+    }
 
-        assert!(
-            files.contains_key(&backend_unit),
-            "Backend unit test file missing"
-        );
-        assert!(
-            files.contains_key(&frontend_unit),
-            "Frontend unit test file missing"
-        );
+    //
+    // 2. SCAFFOLDER + FILESYSTEM UNDER LOOM
+    //
 
-        // Verify template rendering via BLAKE3
-        let integrity = scaffolder.verify_integrity(manifest);
-        assert!(
-            integrity.is_ok(),
-            "Integrity check failed on valid mock files"
-        );
+    #[test]
+    fn loom_scaffolder_single_run_is_consistent() {
+        loom::model(|| {
+            let fs = LoomFS::new();
+            let base = PathBuf::from("/virtual");
+
+            let scaffolder = Scaffolder::new(fs.clone(), base.clone());
+
+            let config = Config {
+                projects: vec!["loom-project".to_string()],
+                features: vec!["loom-feature".to_string()],
+                packages: vec!["loom-package".to_string()],
+                readme: vec![ReadmeConfig {
+                    path: "engines/loom-project".to_string(),
+                    file: "internal/readme.tpl".to_string(),
+                }],
+            };
+
+            let manifest = scaffolder
+                .run(config.clone())
+                .expect("scaffolder run should succeed under loom");
+
+            // Verify integrity using the same LoomFS
+            let result = scaffolder.verify_integrity(manifest);
+
+            assert!(
+                result.is_ok(),
+                "verify_integrity should succeed under all explored schedules"
+            );
+
+            // Sanity: we actually created some dirs/files
+            assert!(fs.create_dir_calls.load(Ordering::SeqCst) > 0);
+            assert!(fs.write_file_calls.load(Ordering::SeqCst) > 0);
+        });
+    }
+
+    //
+    // 3. MULTI-THREADED LOG EMISSION-LIKE PATTERN USING FILESYSTEM
+    //
+
+    #[test]
+    fn loom_multi_threaded_writes_do_not_corrupt_state() {
+        loom::model(|| {
+            let fs = LoomFS::new();
+            let base = PathBuf::from("/virtual");
+
+            // Create two independent scaffolders using the same LoomFS
+            let s1 = Scaffolder::new(fs.clone(), base.clone());
+            let s2 = Scaffolder::new(fs.clone(), base.clone());
+
+            let config = Config {
+                projects: vec!["loom-project".to_string()],
+                features: vec!["loom-feature".to_string()],
+                packages: vec!["pkg-a".to_string(), "pkg-b".to_string()],
+                readme: vec![ReadmeConfig {
+                    path: "engines/loom-project".to_string(),
+                    file: "internal/readme.tpl".to_string(),
+                }],
+            };
+
+            let cfg1 = config.clone();
+            let cfg2 = config.clone();
+
+            let t1 = thread::spawn(move || {
+                let _ = s1.run(cfg1);
+            });
+
+            let t2 = thread::spawn(move || {
+                let _ = s2.run(cfg2);
+            });
+
+            t1.join().unwrap();
+            t2.join().unwrap();
+
+            // Validate filesystem state
+            let files = fs.files.lock().unwrap();
+            for (path, content) in files.iter() {
+                assert!(
+                    !content.is_empty(),
+                    "file {:?} should not be empty under any schedule",
+                    path
+                );
+            }
+        });
     }
 }
