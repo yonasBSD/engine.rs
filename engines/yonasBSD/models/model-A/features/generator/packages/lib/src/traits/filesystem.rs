@@ -131,11 +131,14 @@ impl<F: FileSystem> Scaffolder<F> {
         // 3. Mirrored Module Generation
         let modules = [
             "enums",
+            "macros",
             "utils",
             "traits",
             "core/backends",
             "core/frontends",
+            "core/public",
             "core/internal",
+            "core/private",
         ];
 
         for mod_dir in modules {

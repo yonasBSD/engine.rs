@@ -1,7 +1,7 @@
 mod traits;
 
-use traits::*;
 use engine_rs_lib::{core::Config, traits::RealFS, traits::Scaffolder};
+use traits::*;
 
 use cliclack::{intro, note, outro, progress_bar, spinner};
 use console::style;
@@ -10,7 +10,7 @@ use std::io::{self};
 use std::path::PathBuf;
 
 fn main() -> io::Result<()> {
-    let _ = intro(style(" yonasBSD Engine Scaffolder ").on_cyan().black());
+    let _ = intro(style(" Engine.rs Scaffolder ").on_cyan().black());
 
     // 1. Load Configuration
     let config_raw = fs::read_to_string("config.toml").unwrap_or_else(|_| {
