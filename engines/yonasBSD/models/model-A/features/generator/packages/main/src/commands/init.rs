@@ -9,7 +9,7 @@ use std::io;
 
 pub fn cmd_init() -> io::Result<()> {
     if std::path::Path::new("config.toml").exists() {
-        let _ = error_msg("config.toml already exists.");
+        let _ = ui::error("config.toml already exists.");
         std::process::exit(1);
     }
 
@@ -25,6 +25,6 @@ file = "readme/example.md.tpl"
 
     fs::write("config.toml", default.trim_start())?;
 
-    success_msg("Created default config.toml");
+    ui::success("Created default config.toml");
     Ok(())
 }

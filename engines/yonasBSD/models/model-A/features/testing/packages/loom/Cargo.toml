@@ -2,6 +2,7 @@
 name = "loom-tests"
 version = "0.1.0"
 edition = "2021"
+license = "MIT"
 
 [dependencies]
 engine-rs-lib = { path = "../../../generator/packages/lib", features = ["loom"] }

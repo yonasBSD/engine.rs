@@ -79,11 +79,18 @@ pub fn print_json_integrity_errors(errors: &[String]) {
     println!("{}", out);
 }
 
-pub fn error_msg(msg: &str) {
-    // Red "✘" followed by reset
-    println!("\n\x1b[31m✘\x1b[0m {}", msg);
-}
+pub mod ui {
+    pub fn success(msg: &str) {
+        println!("\n\x1b[32m✔\x1b[0m {}", msg);
+    }
 
-pub fn success_msg(msg: &str) {
-    println!("\n\x1b[32m✔\x1b[0m {}", msg);
+    pub fn error(msg: &str) {
+        // Red "✘" followed by reset
+        eprintln!("\n\x1b[1;31m✘\x1b[0m {}", msg);
+    }
+
+    #[allow(dead_code)]
+    pub fn warn(msg: &str) {
+        eprintln!("\n\x1b[33m⚠\x1b[0m {}", msg);
+    }
 }
