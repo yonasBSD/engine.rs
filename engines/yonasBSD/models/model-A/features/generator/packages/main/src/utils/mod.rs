@@ -2,22 +2,13 @@
 // COMMAND IMPLEMENTATIONS
 //
 
-use crate::*;
-use engine_rs_lib::{
-    core::{Config, ConfigError},
-    traits::RealFS,
-    traits::Scaffolder,
-};
+use engine_rs_lib::core::{Config, ConfigError};
 
 use cliclack::{
-    intro,
-    log::{error, step, success, warning},
-    note, outro, progress_bar, spinner,
+    log::{error, step},
+    note,
 };
-use console::style;
 use std::fs;
-use std::io;
-use std::path::PathBuf;
 
 //
 // LOAD CONFIG
@@ -39,164 +30,6 @@ pub fn load_config() -> Config {
             std::process::exit(1);
         }
     }
-}
-
-//
-// INIT COMMAND
-//
-
-pub fn cmd_init() -> io::Result<()> {
-    if std::path::Path::new("config.toml").exists() {
-        let _ = error("config.toml already exists.");
-        std::process::exit(1);
-    }
-
-    let default = r#"
-projects = ["example-project"]
-features = ["feature-A"]
-packages = ["package-A"]
-
-[[readme]]
-path = "engines/example-project"
-file = "readme/example.md.tpl"
-"#;
-
-    fs::write("config.toml", default.trim_start())?;
-
-    let _ = success("Created default config.toml");
-    Ok(())
-}
-
-//
-// VALIDATE COMMAND
-//
-
-pub fn cmd_validate(explain: bool, quiet: bool, json: bool) -> io::Result<()> {
-    let config = load_config();
-
-    if explain && !is_quiet(quiet, json) {
-        print_explain_rules();
-    }
-
-    match config.validate() {
-        Ok(_) => {
-            if json {
-                print_json_ok(&config);
-            } else if !quiet {
-                let _ = success("Validation Passed");
-                let _ = outro(style(" Validation Complete ").black().on_green());
-            }
-        }
-        Err(errors) => {
-            if json {
-                print_json_validation_errors(&errors);
-            } else {
-                let _ = error("Validation Errors:");
-                for err in errors {
-                    let _ = warning(format!("{}", err));
-                }
-            }
-            std::process::exit(1);
-        }
-    }
-
-    Ok(())
-}
-
-//
-// RUN COMMAND
-//
-
-pub fn cmd_run(explain: bool, quiet: bool, json: bool, debug: bool) -> io::Result<()> {
-    let config = load_config();
-
-    if explain && !is_quiet(quiet, json) {
-        print_explain_rules();
-    }
-
-    // VALIDATION FIRST
-    if let Err(errors) = config.validate() {
-        if json {
-            print_json_validation_errors(&errors);
-        } else {
-            let _ = error("Validation Errors:");
-            for err in errors {
-                let _ = warning(format!("{}", err));
-            }
-        }
-        std::process::exit(1);
-    }
-
-    if !is_quiet(quiet, json) {
-        let _ = intro(style(" Engine.rs Scaffolder ").on_cyan().black());
-    }
-
-    // PROGRESS BAR + SCAFFOLDER
-    let project_list = config.projects.join(", ");
-    let pb = progress_bar(50);
-    let lfs = LoggingFS::new(RealFS, &pb);
-    let scaffolder = Scaffolder::new(lfs, PathBuf::from("."));
-
-    if !is_quiet(quiet, json) {
-        pb.start(format!("Building structures for: {}", project_list));
-    }
-
-    let manifest = scaffolder.run(config.clone())?;
-
-    scaffolder.fs.clear_ui_lines();
-
-    if !is_quiet(quiet, json) {
-        pb.stop("Generation complete.");
-    }
-
-    // DEBUG MODE
-    if debug && !json {
-        let _ = note("Debug Output", "Internal scaffolder paths:");
-        for (path, hash) in &manifest {
-            let _ = step(format!("{}  ({})", path.display(), hash));
-        }
-    }
-
-    // VERIFICATION
-    let s = spinner();
-    if !is_quiet(quiet, json) {
-        s.start("Executing BLAKE-3 Deep Verification...");
-    }
-
-    match scaffolder.verify_integrity(manifest) {
-        Ok(elapsed) => {
-            if json {
-                print_json_ok(&config);
-            } else if !quiet {
-                s.stop(format!("Integrity Verified in {}ms.", elapsed.as_millis()));
-
-                let _ = note(
-                    "Next Steps",
-                    format!(
-                        "Generated engines for: {}.\nRun {} to build the engine workspace.",
-                        style(&project_list).cyan(),
-                        style("just build").yellow()
-                    ),
-                );
-
-                let _ = outro(style(" Build Success ").black().on_green());
-            }
-        }
-        Err(errors) => {
-            if json {
-                print_json_integrity_errors(&errors);
-            } else {
-                s.stop("Integrity Compromised!");
-                let _ = error("Integrity check failed:");
-                for err in errors {
-                    let _ = warning(format!("{}", err));
-                }
-            }
-            std::process::exit(1);
-        }
-    }
-
-    Ok(())
 }
 
 //
@@ -244,4 +77,13 @@ pub fn print_json_integrity_errors(errors: &[String]) {
         "errors": errors,
     });
     println!("{}", out);
+}
+
+pub fn error_msg(msg: &str) {
+    // Red "✘" followed by reset
+    println!("\n\x1b[31m✘\x1b[0m {}", msg);
+}
+
+pub fn success_msg(msg: &str) {
+    println!("\n\x1b[32m✔\x1b[0m {}", msg);
 }
