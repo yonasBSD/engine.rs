@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-engine-rs = { path = "../../../generator/packages/main", features = ["loom"] }
+engine-rs-lib = { path = "../../../generator/packages/lib", features = ["loom"] }
 
 [dev-dependencies]
-loom = "0.7.2"
+loom = "0.7"

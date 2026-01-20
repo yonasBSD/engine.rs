@@ -1,13 +1,12 @@
 [package]
-name = "engine-rs"
+name = "engine-rs-lib"
 version = "0.1.0"
 edition = "2024"
-description = "engine.rs scaffolding"
+description = "engine.rs scaffolding library"
 license = "MIT"
 readme = "README.md"
 
 [dependencies]
-engine-rs-lib = { "path" = "../lib" }
 blake3 = "1.8"
 cliclack = "0.3"
 console = "0.16"

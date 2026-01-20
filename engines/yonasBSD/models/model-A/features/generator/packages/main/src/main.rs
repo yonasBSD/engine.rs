@@ -1,63 +1,14 @@
+mod traits;
+
+use traits::*;
+use engine_rs_lib::{core::Config, traits::RealFS, traits::Scaffolder};
+
 use cliclack::{intro, note, outro, progress_bar, spinner};
 use console::style;
 use std::fs;
-use std::io::{self, Write};
-use std::path::{Path, PathBuf};
-use std::thread;
-use std::time::Duration;
+use std::io::{self};
+use std::path::PathBuf;
 
-use engine_rs::{core::Config, traits::FileSystem, traits::RealFS, traits::Scaffolder};
-
-// ==========================================================
-// 1. UI DECORATOR (LoggingFS)
-// ==========================================================
-/// A decorator for any FileSystem that updates the Clack progress bar
-struct LoggingFS<'a, F: FileSystem> {
-    inner: F,
-    pb: &'a cliclack::ProgressBar,
-}
-
-impl<'a, F: FileSystem> LoggingFS<'a, F> {
-    fn new(inner: F, pb: &'a cliclack::ProgressBar) -> Self {
-        Self { inner, pb }
-    }
-
-    fn log_ephemeral(&self, action: &str, path: &Path) {
-        self.pb.inc(1);
-        // ANSI escape codes to clear the line and print the update above the bar
-        print!(
-            "\x1B[1A\x1B[2K\r  {} {}: {:?}\n",
-            style("⚡").yellow(),
-            action,
-            path
-        );
-        let _ = io::stdout().flush();
-        thread::sleep(Duration::from_millis(5));
-    }
-
-    fn clear_ui_lines(&self) {
-        print!("\x1B[1A\x1B[2K\r\x1B[1A\x1B[2K\r");
-        let _ = io::stdout().flush();
-    }
-}
-
-impl<'a, F: FileSystem> FileSystem for LoggingFS<'a, F> {
-    fn create_dir_all(&self, path: &Path) -> io::Result<()> {
-        self.log_ephemeral("mkdir", path);
-        self.inner.create_dir_all(path)
-    }
-    fn write_file(&self, path: &Path, content: &str) -> io::Result<()> {
-        self.log_ephemeral("write", path);
-        self.inner.write_file(path, content)
-    }
-    fn read_to_string(&self, path: &Path) -> io::Result<String> {
-        self.inner.read_to_string(path)
-    }
-}
-
-// ==========================================================
-// 2. MAIN RUNTIME
-// ==========================================================
 fn main() -> io::Result<()> {
     let _ = intro(style(" yonasBSD Engine Scaffolder ").on_cyan().black());
 
@@ -86,7 +37,7 @@ file = "readme/engines.md.tpl""#
 
     // 4. Verification Phase
     let s = spinner();
-    s.start("Executing BLAKE3 Deep Verification...");
+    s.start("Executing BLAKE-3 Deep Verification...");
 
     match scaffolder.verify_integrity(manifest) {
         Ok(elapsed) => {
