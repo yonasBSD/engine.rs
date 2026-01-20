@@ -14,23 +14,31 @@ fn main() -> io::Result<()> {
 
     // 1. Load Configuration
     let config_raw = fs::read_to_string("config.toml").unwrap_or_else(|_| {
-        r#"project_name = "yonasBSD"
+        r#"
+projects = ["yonasBSD"]
+features = ["feature-A"]
+packages = ["package-A"]
+
 [[readme]]
 path = "engines/yonasBSD"
-file = "readme/engines.md.tpl""#
-            .to_string()
+file = "readme/engines.md.tpl"
+"#
+        .to_string()
     });
 
     let config: Config = toml::from_str(&config_raw).expect("Invalid TOML config");
 
+    // Build a readable list of projects for UI messages
+    let project_list = config.projects.join(", ");
+
     // 2. Setup Progress & Scaffolder
-    // We estimate ~50 files/dirs for the mirrored 12-level hierarchy
     let pb = progress_bar(50);
     let lfs = LoggingFS::new(RealFS, &pb);
     let scaffolder = Scaffolder::new(lfs, PathBuf::from("."));
 
     // 3. Execution Phase
-    pb.start(format!("Building {} structure...", config.project_name));
+    pb.start(format!("Building structures for: {}", project_list));
+
     let manifest = scaffolder.run(config.clone())?;
     scaffolder.fs.clear_ui_lines();
     pb.stop("Generation complete.");
@@ -46,8 +54,8 @@ file = "readme/engines.md.tpl""#
             let _ = note(
                 "Next Steps",
                 format!(
-                    "Project {} generated. Run {} to build the engine.",
-                    style(&config.project_name).cyan(),
+                    "Generated engines for: {}.\nRun {} to build the engine workspace.",
+                    style(&project_list).cyan(),
                     style("just build").yellow()
                 ),
             );

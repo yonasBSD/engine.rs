@@ -13,11 +13,11 @@ pub struct ReadmeConfig {
 
 #[derive(Deserialize, Clone, Debug)]
 pub struct Config {
-    #[serde(default = "default_project_name")]
-    pub project_name: String,
-    #[serde(default = "default_feature_name")]
-    pub feature_name: String,
-    #[serde(default = "default_package_name")]
-    pub package_name: String,
+    #[serde(default = "default_projects")]
+    pub projects: Vec<String>,
+    #[serde(default = "default_features")]
+    pub features: Vec<String>,
+    #[serde(default = "default_packages")]
+    pub packages: Vec<String>,
     pub readme: Vec<ReadmeConfig>,
 }

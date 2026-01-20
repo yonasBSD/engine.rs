@@ -11,7 +11,10 @@ pub struct Asset;
 pub const DEFAULT_README_TPL: &str = "# {{ project_name }}\nGenerated via Scaffolder.\n";
 pub const TPL_CARGO: &str = r#"[workspace]
 members = [
-    "{{ feature_name }}/packages/common",
+    "{{ feature_name }}/packages/cli",
+    "{{ feature_name }}/packages/api",
+    "{{ feature_name }}/packages/lib",
+    "{{ feature_name }}/packages/testing",
     "{{ feature_name }}/packages/{{ package_name }}",
 ]
 resolver = "2""#;
