@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 use std::thread;
 use std::time::Duration;
 
-use engine_rs::{Config, FileSystem, RealFS, Scaffolder};
+use engine_rs::{core::Config, traits::FileSystem, traits::RealFS, traits::Scaffolder};
 
 // ==========================================================
 // 1. UI DECORATOR (LoggingFS)

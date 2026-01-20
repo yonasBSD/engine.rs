@@ -34,6 +34,7 @@ vars:
   hostname:
     sh: hostname
   taskEnv: .task.env
+  engine: yonasBSD
 
 tasks:
 
@@ -83,17 +84,28 @@ tasks:
   test:code:
     desc: Test code
     cmds:
-      - task: test:code:rust
+      - task: test:code:engine
+      - task: test:code:loom
       - task: test:docs:rust
 
-  test:code:rust:
+  test:code:engine:
     desc: "Test Rust code"
     sources:
       - '**/*.rs'
+    dir: 'engines/{{ .engine }}/models/model-A/features/generator/packages/main'
     cmds:
       - cargo insta test
       - cargo nextest run --workspace --all-targets --verbose --no-tests=warn --no-capture
-      #- env RUST_TEST_THREADS=1 cargo test --test concurrency_loom --cfg loom -- --nocapture
+
+  test:code:loom:
+    desc: "Test Loom concurrency"
+    sources:
+      - '**/*.rs'
+    dir: 'engines/{{ .engine }}/models/model-A/features/testing/packages/loom'
+    env:
+      RUST_TEST_THREADS: 1
+    cmds:
+      - cargo test -- --nocapture
 
   test:docs:rust:
     desc: "Test documentation code"

@@ -4,7 +4,7 @@ use std::io;
 use std::path::{Path, PathBuf};
 use std::rc::Rc;
 
-use engine_rs::{Config, FileSystem, ReadmeConfig, Scaffolder};
+use engine_rs::{core::Config, core::ReadmeConfig, traits::FileSystem, traits::Scaffolder};
 
 // ==========================================================
 // THE NON-BLOCKING MOCK FILESYSTEM

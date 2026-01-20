@@ -14,6 +14,7 @@ permissions:
 
 env:
   CARGO_TERM_COLOR: always
+  FEATURE_PATH: engines/yonasBSD/models/model-A/features/generator/packages/main
 
 jobs:
   test:
@@ -100,6 +101,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           run: |
+            cd ${{ env.FEATURE_PATH }}
             cargo test ${CARGO_OPTIONS:+$CARGO_OPTIONS} -- -Z unstable-options --format json | cargo2junit > results.xml;
             cargo llvm-cov --all-features --workspace --codecov --output-path ./codecov.json
 
