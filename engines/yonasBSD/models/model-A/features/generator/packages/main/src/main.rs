@@ -27,6 +27,12 @@ file = "readme/engines.md.tpl"
     });
 
     let config: Config = toml::from_str(&config_raw).expect("Invalid TOML config");
+    if let Err(errors) = config.validate() {
+        for err in errors {
+            eprintln!("{} {}", console::style("✘").red(), err);
+        }
+        std::process::exit(1);
+    }
 
     // Build a readable list of projects for UI messages
     let project_list = config.projects.join(", ");
