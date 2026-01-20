@@ -28,9 +28,17 @@ pub struct Config {
 
 #[derive(Debug)]
 pub enum ConfigError {
-    EmptyList { field: &'static str },
-    DuplicateValues { field: &'static str, duplicates: Vec<String> },
-    InvalidName { field: &'static str, value: String },
+    EmptyList {
+        field: &'static str,
+    },
+    DuplicateValues {
+        field: &'static str,
+        duplicates: Vec<String>,
+    },
+    InvalidName {
+        field: &'static str,
+        value: String,
+    },
 }
 
 impl std::fmt::Display for ConfigError {
@@ -57,7 +65,12 @@ impl std::fmt::Display for ConfigError {
     }
 }
 
-fn check_reserved(field: &'static str, list: &[String], errors: &mut Vec<ConfigError>, reserved: &[&str]) {
+fn check_reserved(
+    field: &'static str,
+    list: &[String],
+    errors: &mut Vec<ConfigError>,
+    reserved: &[&str],
+) {
     for item in list {
         if reserved.contains(&item.as_str()) {
             errors.push(ConfigError::InvalidName {
@@ -175,10 +188,19 @@ impl Config {
         }
 
         let reserved = [
-            "core", "internal", "private", "public",
-            "tests", "integration", "unit",
-            "src", "packages", "models", "features",
-            "engine", "engines",
+            "core",
+            "internal",
+            "private",
+            "public",
+            "tests",
+            "integration",
+            "unit",
+            "src",
+            "packages",
+            "models",
+            "features",
+            "engine",
+            "engines",
         ];
 
         check_reserved("projects", &self.projects, &mut errors, &reserved);
