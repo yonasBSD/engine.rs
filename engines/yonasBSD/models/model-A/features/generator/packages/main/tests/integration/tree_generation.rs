@@ -3,8 +3,8 @@
 //! This refactored version still validates the generated tree structure,
 //! but uses the test harness + config builder DSL for consistency.
 
-use engine_rs_lib::*;
 use crate::helpers::*;
+use engine_rs_lib::*;
 
 #[test]
 fn custom_modules_are_generated() {

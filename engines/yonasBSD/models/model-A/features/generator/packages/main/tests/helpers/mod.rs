@@ -1,10 +1,10 @@
 pub mod fs_utils;
 pub mod harness;
 pub mod harness_snapshot_extensions;
+pub mod macros;
 pub mod template_dsl;
 pub mod tree_assertions;
 pub mod tree_utils;
-pub mod macros;
 
 pub use harness::extensions::*;
 pub use harness::scaffolder_harness::*;
