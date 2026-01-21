@@ -1,0 +1,5 @@
+---
+source: engines/yonasBSD/models/model-A/features/generator/packages/main/tests/integration/snapshots/readme_resolution.rs
+expression: readme1
+---
+# Example from lib
