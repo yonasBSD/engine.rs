@@ -1,7 +1,7 @@
 // ==========================================================
 // FILESYSTEM ABSTRACTION
 // ==========================================================
-use crate::core::*;
+use crate::{core::*, enums::*};
 
 use blake3;
 use minijinja::{Environment, context};
@@ -216,8 +216,7 @@ impl<F: FileSystem> Scaffolder<F> {
             self.fs.create_dir_all(unit_mod.parent().unwrap())?;
             self.fs.create_dir_all(integration_mod.parent().unwrap())?;
 
-            self.fs
-                .write_file(&base.join("mod.rs"), "mod tests;\n")?;
+            self.fs.write_file(&base.join("mod.rs"), "mod tests;\n")?;
 
             let t_content = self
                 .env
@@ -237,6 +236,11 @@ impl<F: FileSystem> Scaffolder<F> {
                 integration_mod,
                 self.calculate_hash("// Automated Integration Tests\n"),
             );
+        }
+
+        // 4. Custom module expansions (JSON-like DSL)
+        if let Some(spec) = config.custom_modules.get(package) {
+            self.generate_custom_tree(manifest, pkg_path, spec)?;
         }
 
         Ok(())
@@ -265,5 +269,62 @@ impl<F: FileSystem> Scaffolder<F> {
         } else {
             Err(errors)
         }
+    }
+
+    fn generate_custom_tree(
+        &self,
+        manifest: &mut HashMap<PathBuf, String>,
+        base: &Path,
+        spec: &DirSpec,
+    ) -> io::Result<()> {
+        match spec {
+            DirSpec::List(items) => {
+                for item in items {
+                    let dir = base.join(item);
+                    self.create_module_skeleton(manifest, &dir)?;
+                }
+            }
+            DirSpec::Tree(map) => {
+                for (name, child) in map {
+                    let dir = base.join(name);
+                    self.create_module_skeleton(manifest, &dir)?;
+                    self.generate_custom_tree(manifest, &dir, child)?;
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    fn create_module_skeleton(
+        &self,
+        manifest: &mut HashMap<PathBuf, String>,
+        dir: &Path,
+    ) -> io::Result<()> {
+        let src_dir = dir.join("src");
+        let tests_mod = dir.join("tests/mod.rs");
+        let unit_mod = dir.join("tests/unit/mod.rs");
+        let integration_mod = dir.join("tests/integration/mod.rs");
+
+        self.fs.create_dir_all(&src_dir)?;
+        self.fs.create_dir_all(unit_mod.parent().unwrap())?;
+        self.fs.create_dir_all(integration_mod.parent().unwrap())?;
+
+        self.fs
+            .write_file(&dir.join("mod.rs"), "pub mod tests;\n")?;
+
+        self.fs.write_file(&tests_mod, "// Tests\n")?;
+        self.fs.write_file(&unit_mod, "// Unit Tests\n")?;
+        self.fs
+            .write_file(&integration_mod, "// Integration Tests\n")?;
+
+        manifest.insert(tests_mod, self.calculate_hash("// Tests\n"));
+        manifest.insert(unit_mod, self.calculate_hash("// Unit Tests\n"));
+        manifest.insert(
+            integration_mod,
+            self.calculate_hash("// Integration Tests\n"),
+        );
+
+        Ok(())
     }
 }

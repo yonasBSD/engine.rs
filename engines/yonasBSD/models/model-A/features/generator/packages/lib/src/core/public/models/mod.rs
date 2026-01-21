@@ -6,8 +6,14 @@ mod tests;
 
 use regex::Regex;
 use serde::Deserialize;
+use std::collections::HashMap;
 
-use crate::{enums::*, utils::*};
+use crate::{
+    prelude::*,
+    core::*,
+    enums::*,
+    utils::*,
+};
 
 #[derive(Deserialize, Clone, Debug)]
 pub struct ReadmeConfig {
@@ -24,6 +30,8 @@ pub struct Config {
     #[serde(default = "default_packages")]
     pub packages: Vec<String>,
     pub readme: Vec<ReadmeConfig>,
+    #[serde(default)]
+    pub custom_modules: HashMap<String, DirSpec>,
 }
 
 impl std::fmt::Display for ConfigError {
@@ -69,6 +77,29 @@ fn check_reserved(
 impl std::error::Error for ConfigError {}
 
 impl Config {
+    pub fn new(
+        projects: Vec<String>,
+        features: Vec<String>,
+        packages: Vec<String>,
+        readme: Vec<ReadmeConfig>,
+    ) -> Self {
+        let custom_modules = dirs!({
+            "api" => {
+                "core": {
+                    "backends": ["graphql", "grpc", "rest"],
+                }
+            },
+        });
+
+        Self {
+            projects,
+            features,
+            packages,
+            readme,
+            custom_modules,
+        }
+    }
+
     pub fn validate(&self) -> Result<(), Vec<ConfigError>> {
         let mut errors = Vec::new();
 

@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod tests {
     use crate::*;
+    use std::collections::HashMap;
 
     fn cfg(p: Vec<&str>, f: Vec<&str>, pk: Vec<&str>) -> Config {
         Config {
@@ -8,6 +9,7 @@ mod tests {
             features: f.into_iter().map(|s| s.to_string()).collect(),
             packages: pk.into_iter().map(|s| s.to_string()).collect(),
             readme: vec![],
+            custom_modules: HashMap::<String, DirSpec>::new(),
         }
     }
 
