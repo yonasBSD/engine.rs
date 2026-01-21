@@ -5,3 +5,5 @@ mod custom_modules;
 mod init_validates;
 #[cfg(test)]
 mod tree_generation;
+#[cfg(test)]
+mod snapshots;
