@@ -7,8 +7,8 @@
 //! - TreeAssertionDsl for tree-based assertions
 //! - HarnessSnapshotExtensions for snapshotting the tree
 
-use engine_rs_lib::*;
 use crate::helpers::*;
+use engine_rs_lib::*;
 
 #[test]
 fn custom_modules_are_generated() {

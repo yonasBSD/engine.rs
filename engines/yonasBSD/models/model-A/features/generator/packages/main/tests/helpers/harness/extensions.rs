@@ -2,8 +2,8 @@ use assert_cmd::cargo::cargo_bin_cmd;
 use std::fs;
 use std::path::Path;
 
-use engine_rs_lib::*;
 use crate::helpers::*;
+use engine_rs_lib::*;
 
 /// Trait providing all harness functionality.
 /// Keeps the core struct clean and focused.

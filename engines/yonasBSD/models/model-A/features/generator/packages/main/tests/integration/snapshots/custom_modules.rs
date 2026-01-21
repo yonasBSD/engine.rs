@@ -2,8 +2,8 @@
 //!
 //! Uses the harness + config builder DSL + snapshot extensions.
 
-use engine_rs_lib::*;
 use crate::helpers::*;
+use engine_rs_lib::*;
 
 #[test]
 fn snapshot_custom_module_tree() {

@@ -8,12 +8,9 @@ readme = "README.md"
 
 [dependencies]
 blake3 = "1.8"
-cliclack = "0.3"
-console = "0.16"
 minijinja = "2.14"
 rust-embed = "8.11"
 serde = { version = "1.0", features = ["derive"] }
-toml = "0.9"
 loom = { version = "0.7", optional = true }
 regex = "1.12.2"
 

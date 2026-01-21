@@ -9,11 +9,11 @@ fn main() {
         .readme("readme/example.md.tpl", "engines/{{ project }}")
         .readme(
             "readme/api.md.tpl",
-            "engines/{{ project }}/models/{{ model }}/features/{{ feature }}/packages/api"
+            "engines/{{ project }}/models/{{ model }}/features/{{ feature }}/packages/api",
         )
         .readme(
             "readme/lib.md.tpl",
-            "engines/{{ project }}/models/{{ model }}/features/{{ feature }}/packages/lib"
+            "engines/{{ project }}/models/{{ model }}/features/{{ feature }}/packages/lib",
         )
         .custom_module("api.core", &["graphql", "grpc", "rest"]);
 
