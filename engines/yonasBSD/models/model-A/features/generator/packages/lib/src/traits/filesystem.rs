@@ -154,15 +154,18 @@ impl<F: FileSystem> Scaffolder<F> {
         let ctx = context!(
             project_name => project,
             feature_name => feature,
-            package_name => package
+            package_name => package,
+            model => "model-A",
         );
 
         // 1. Generate READMEs for this project/feature/package combo
         for entry in &config.readme {
+            // Resolve template name (your existing logic)
             let tpl_name = self
                 .resolve_template_name(&entry.file)
                 .unwrap_or_else(|| "internal/readme.tpl".to_string());
 
+            // Render README content
             let rendered = self
                 .env
                 .get_template(&tpl_name)
@@ -170,7 +173,12 @@ impl<F: FileSystem> Scaffolder<F> {
                 .render(ctx.clone())
                 .unwrap();
 
-            let dest = self.base_path.join(&entry.path).join("README.md");
+            // Render the path using MiniJinja
+            let rendered_path = self.render_path(&entry.path, &ctx);
+
+            // Final destination
+            let dest = self.base_path.join(rendered_path).join("README.md");
+
             self.fs.create_dir_all(dest.parent().unwrap())?;
             self.fs.write_file(&dest, &rendered)?;
             manifest.insert(dest, self.calculate_hash(&rendered));
@@ -363,5 +371,15 @@ impl<F: FileSystem> Scaffolder<F> {
         }
 
         None
+    }
+
+    fn render_path(
+        &self,
+        raw: &str,
+        ctx: &minijinja::value::Value,
+    ) -> String {
+        self.env
+            .render_str(raw, ctx)
+            .expect("Failed to render path template")
     }
 }
