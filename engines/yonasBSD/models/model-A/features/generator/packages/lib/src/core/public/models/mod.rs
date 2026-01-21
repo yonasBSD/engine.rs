@@ -8,12 +8,7 @@ use regex::Regex;
 use serde::Deserialize;
 use std::collections::HashMap;
 
-use crate::{
-    prelude::*,
-    core::*,
-    enums::*,
-    utils::*,
-};
+use crate::{core::*, enums::*, prelude::*, utils::*};
 
 #[derive(Deserialize, Clone, Debug)]
 pub struct ReadmeConfig {
@@ -29,6 +24,7 @@ pub struct Config {
     pub features: Vec<String>,
     #[serde(default = "default_packages")]
     pub packages: Vec<String>,
+    #[serde(default)]
     pub readme: Vec<ReadmeConfig>,
     #[serde(default)]
     pub custom_modules: HashMap<String, DirSpec>,
