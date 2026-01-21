@@ -1,3 +1,5 @@
+//! Snapshot integration tests module.
+
 #[cfg(test)]
 mod custom_modules;
 #[cfg(test)]

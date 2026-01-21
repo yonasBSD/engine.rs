@@ -1,0 +1,5 @@
+---
+source: engines/yonasBSD/models/model-A/features/generator/packages/main/tests/helpers/harness_snapshot_extensions.rs
+expression: content
+---
+pub mod tests;

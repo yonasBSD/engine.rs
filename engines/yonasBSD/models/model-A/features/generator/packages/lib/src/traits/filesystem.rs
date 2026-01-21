@@ -152,9 +152,9 @@ impl<F: FileSystem> Scaffolder<F> {
     ) -> io::Result<()> {
         // Context for templates
         let ctx = context!(
-            project_name => project,
-            feature_name => feature,
-            package_name => package,
+            project => project,
+            feature => feature,
+            package => package,
             model => "model-A",
         );
 
@@ -173,11 +173,16 @@ impl<F: FileSystem> Scaffolder<F> {
                 .render(ctx.clone())
                 .unwrap();
 
-            // Render the path using MiniJinja
+            // Expand template variables
             let rendered_path = self.render_path(&entry.path, &ctx);
 
-            // Final destination
-            let dest = self.base_path.join(rendered_path).join("README.md");
+            // Normalize the path (remove duplicate slashes, resolve .., etc.)
+            let normalized = PathBuf::from(rendered_path)
+                .components()
+                .collect::<PathBuf>();
+
+            // Anchor to base_path
+            let dest = self.base_path.join(normalized).join("README.md");
 
             self.fs.create_dir_all(dest.parent().unwrap())?;
             self.fs.write_file(&dest, &rendered)?;
@@ -373,11 +378,7 @@ impl<F: FileSystem> Scaffolder<F> {
         None
     }
 
-    fn render_path(
-        &self,
-        raw: &str,
-        ctx: &minijinja::value::Value,
-    ) -> String {
+    fn render_path(&self, raw: &str, ctx: &minijinja::value::Value) -> String {
         self.env
             .render_str(raw, ctx)
             .expect("Failed to render path template")

@@ -1,44 +1,29 @@
-use assert_cmd::cargo::cargo_bin_cmd;
-use std::fs;
-use tempfile::tempdir;
+//! Snapshot test: custom module tree structure and backends mod.rs content.
+//!
+//! Uses the harness + config builder DSL + snapshot extensions.
 
-use crate::helpers::{capture_tree, read_file};
+use engine_rs_lib::*;
+use crate::helpers::*;
 
 #[test]
 fn snapshot_custom_module_tree() {
-    let temp = tempdir().unwrap();
-    let root = temp.path();
+    let h = ScaffolderTestHarness::new();
 
-    // Write config.toml
-    fs::write(
-        root.join("config.toml"),
-        r#"
-            projects = ["demo"]
-            features = ["alpha"]
-            packages = ["api"]
+    let cfg = ConfigBuilder::new()
+        .project("demo")
+        .feature("alpha")
+        .package("api")
+        .custom_module("api.core", &["graphql", "grpc", "rest"]);
 
-            [custom_modules.api.core]
-            backends = ["graphql", "grpc", "rest"]
-        "#,
-    )
-    .unwrap();
+    h.write_config_builder(cfg);
+    h.run();
 
-    // Run scaffolder
-    cargo_bin_cmd!("engine-rs")
-        .current_dir(root)
-        .arg("run")
-        .assert()
-        .success();
+    // Snapshot the directory tree
+    h.snapshot_tree("custom_module_tree");
 
-    // Capture directory tree
-    let tree = capture_tree(root);
-
-    insta::assert_snapshot!("custom_module_tree", tree);
-
-    // Snapshot a specific file (example)
-    let mod_rs = read_file(
-        &root.join("engines/demo/models/model-A/features/alpha/packages/api/core/backends/mod.rs"),
+    // Snapshot a specific generated file
+    h.snapshot_file(
+        "backends_mod_rs",
+        "engines/demo/models/model-A/features/alpha/packages/api/core/backends/mod.rs",
     );
-
-    insta::assert_snapshot!("backends_mod_rs", mod_rs);
 }

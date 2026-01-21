@@ -1,6 +1,6 @@
 ---
-source: engines/yonasBSD/models/model-A/features/generator/packages/main/tests/integration/snapshots/custom_modules.rs
-expression: h.tree()
+source: engines/yonasBSD/models/model-A/features/generator/packages/main/tests/helpers/harness_snapshot_extensions.rs
+expression: tree
 ---
 
 engines

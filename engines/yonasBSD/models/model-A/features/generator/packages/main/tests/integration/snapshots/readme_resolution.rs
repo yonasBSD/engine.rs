@@ -1,40 +1,32 @@
-use assert_cmd::cargo::cargo_bin_cmd;
-use tempfile::tempdir;
-use std::fs;
+//! Snapshot test: readme template resolution for simple, non-templated paths.
+//!
+//! This verifies that readme templates are rendered into the expected locations.
 
-use crate::helpers::read_file;
+use crate::helpers::{HarnessExtensions, HarnessSnapshotExtensions, ScaffolderTestHarness};
 
 #[test]
 fn snapshot_readme_template_resolution() {
-    let temp = tempdir().unwrap();
-    let root = temp.path();
+    let h = ScaffolderTestHarness::new();
 
-    fs::write(
-        root.join("config.toml"),
+    h.write_config(
         r#"
-            projects = ["demo"]
-            features = ["alpha"]
-            packages = ["api"]
+        projects = ["demo"]
+        features = ["alpha"]
+        packages = ["api"]
 
-            [[readme]]
-            path = "engines/demo"
-            file = "readme/example.md.tpl"
+        [[readme]]
+        path = "engines/demo"
+        file = "readme/example.md.tpl"
 
-            [[readme]]
-            path = "engines/demo/models"
-            file = "readme/benches.md.tpl"
-        "#,
-    ).unwrap();
+        [[readme]]
+        path = "engines/demo/models"
+        file = "readme/benches.md.tpl"
+    "#,
+    );
 
-    cargo_bin_cmd!("engine-rs")
-        .current_dir(root)
-        .arg("run")
-        .assert()
-        .success();
+    h.run();
 
-    let readme1 = read_file(&root.join("engines/demo/README.md"));
-    let readme2 = read_file(&root.join("engines/demo/models/README.md"));
-
-    insta::assert_snapshot!("readme_demo", readme1);
-    insta::assert_snapshot!("readme_models", readme2);
+    // Snapshot the rendered README files
+    h.snapshot_file("readme_demo", "engines/demo/README.md");
+    h.snapshot_file("readme_models", "engines/demo/models/README.md");
 }

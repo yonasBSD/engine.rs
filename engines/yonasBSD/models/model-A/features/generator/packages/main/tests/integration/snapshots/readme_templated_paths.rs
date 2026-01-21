@@ -1,62 +1,45 @@
-use assert_cmd::cargo::cargo_bin_cmd;
-use tempfile::tempdir;
-use std::fs;
+//! Snapshot test: readme template resolution with templated paths.
+//!
+//! This verifies that `{{ project }}`, `{{ model }}`, and `{{ feature }}`
+//! are correctly expanded in readme target paths.
 
-use crate::helpers::{read_file, capture_tree};
+use crate::helpers::*;
+use crate::engine;
+use engine_rs_lib::*;
 
 #[test]
 fn snapshot_readme_templated_paths() {
-    let temp = tempdir().unwrap();
-    let root = temp.path();
+    let h = ScaffolderTestHarness::new();
 
-    fs::write(
-        root.join("config.toml"),
-        r#"
-            projects = ["demo"]
-            features = ["alpha"]
-            packages = ["api", "lib"]
-
-            # Global README
-            [[readme]]
-            file = "readme/example.md.tpl"
-            path = "engines/{{ project }}"
-
-            # README for api package (path determines target)
-            [[readme]]
-            file = "readme/api.md.tpl"
-            path = "engines/{{ project }}/models/{{ model }}/features/{{ feature }}/packages/api"
-
-            # README for lib package (path determines target)
-            [[readme]]
-            file = "readme/lib.md.tpl"
-            path = "engines/{{ project }}/models/{{ model }}/features/{{ feature }}/packages/lib"
-        "#,
-    ).unwrap();
-
-    cargo_bin_cmd!("engine-rs")
-        .current_dir(root)
-        .arg("run")
-        .assert()
-        .success();
-
-    // Snapshot the tree
-    let tree = capture_tree(root);
-    insta::assert_snapshot!("templated_path_tree", tree);
-
-    // Snapshot README contents
-    let global = read_file(
-        &root.join("engines/demo/README.md")
+    let cfg = engine!(
+        projects = ["demo"],
+        features = ["alpha"],
+        packages = ["api", "lib"],
+        readme("readme/example.md.tpl", "engines/{{ project }}"),
+        readme(
+            "readme/api.md.tpl",
+            "engines/{{ project }}/models/{{ model }}/features/{{ feature }}/packages/api"
+        ),
+        readme(
+            "readme/lib.md.tpl",
+            "engines/{{ project }}/models/{{ model }}/features/{{ feature }}/packages/lib"
+        )
     );
 
-    let api = read_file(
-        &root.join("engines/demo/models/model-A/features/alpha/packages/api/README.md")
-    );
+    h.write_config_builder(cfg);
+    h.run();
 
-    let lib = read_file(
-        &root.join("engines/demo/models/model-A/features/alpha/packages/lib/README.md")
-    );
+    // Snapshot the full tree for context
+    h.snapshot_tree("tree");
 
-    insta::assert_snapshot!("readme_global", global);
-    insta::assert_snapshot!("readme_api", api);
-    insta::assert_snapshot!("readme_lib", lib);
+    // Snapshot each rendered README at its intended path
+    h.snapshot_file("readme_global", "engines/demo/README.md");
+    h.snapshot_file(
+        "readme_api",
+        "engines/demo/models/model-A/features/alpha/packages/api/README.md",
+    );
+    h.snapshot_file(
+        "readme_lib",
+        "engines/demo/models/model-A/features/alpha/packages/lib/README.md",
+    );
 }

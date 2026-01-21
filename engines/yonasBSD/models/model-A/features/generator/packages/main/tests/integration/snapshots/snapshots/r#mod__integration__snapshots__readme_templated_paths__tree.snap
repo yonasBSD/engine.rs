@@ -1,5 +1,5 @@
 ---
-source: engines/yonasBSD/models/model-A/features/generator/packages/main/tests/integration/snapshots/custom_modules.rs
+source: engines/yonasBSD/models/model-A/features/generator/packages/main/tests/integration/snapshots/readme_templated_paths.rs
 expression: h.tree()
 ---
 
@@ -14,46 +14,6 @@ engines/demo/models/model-A/features/alpha/packages
 engines/demo/models/model-A/features/alpha/packages/api
 engines/demo/models/model-A/features/alpha/packages/api/docs
 engines/demo/models/model-A/features/alpha/packages/api/vendor
-engines/demo/models/model-A/features/alpha/packages/api/core
-engines/demo/models/model-A/features/alpha/packages/api/core/backends
-engines/demo/models/model-A/features/alpha/packages/api/core/backends/rest
-engines/demo/models/model-A/features/alpha/packages/api/core/backends/rest/tests
-engines/demo/models/model-A/features/alpha/packages/api/core/backends/rest/tests/integration
-engines/demo/models/model-A/features/alpha/packages/api/core/backends/rest/tests/integration/mod.rs
-engines/demo/models/model-A/features/alpha/packages/api/core/backends/rest/tests/unit
-engines/demo/models/model-A/features/alpha/packages/api/core/backends/rest/tests/unit/mod.rs
-engines/demo/models/model-A/features/alpha/packages/api/core/backends/rest/tests/mod.rs
-engines/demo/models/model-A/features/alpha/packages/api/core/backends/rest/mod.rs
-engines/demo/models/model-A/features/alpha/packages/api/core/backends/tests
-engines/demo/models/model-A/features/alpha/packages/api/core/backends/tests/integration
-engines/demo/models/model-A/features/alpha/packages/api/core/backends/tests/integration/mod.rs
-engines/demo/models/model-A/features/alpha/packages/api/core/backends/tests/unit
-engines/demo/models/model-A/features/alpha/packages/api/core/backends/tests/unit/mod.rs
-engines/demo/models/model-A/features/alpha/packages/api/core/backends/tests/mod.rs
-engines/demo/models/model-A/features/alpha/packages/api/core/backends/mod.rs
-engines/demo/models/model-A/features/alpha/packages/api/core/backends/grpc
-engines/demo/models/model-A/features/alpha/packages/api/core/backends/grpc/tests
-engines/demo/models/model-A/features/alpha/packages/api/core/backends/grpc/tests/integration
-engines/demo/models/model-A/features/alpha/packages/api/core/backends/grpc/tests/integration/mod.rs
-engines/demo/models/model-A/features/alpha/packages/api/core/backends/grpc/tests/unit
-engines/demo/models/model-A/features/alpha/packages/api/core/backends/grpc/tests/unit/mod.rs
-engines/demo/models/model-A/features/alpha/packages/api/core/backends/grpc/tests/mod.rs
-engines/demo/models/model-A/features/alpha/packages/api/core/backends/grpc/mod.rs
-engines/demo/models/model-A/features/alpha/packages/api/core/backends/graphql
-engines/demo/models/model-A/features/alpha/packages/api/core/backends/graphql/tests
-engines/demo/models/model-A/features/alpha/packages/api/core/backends/graphql/tests/integration
-engines/demo/models/model-A/features/alpha/packages/api/core/backends/graphql/tests/integration/mod.rs
-engines/demo/models/model-A/features/alpha/packages/api/core/backends/graphql/tests/unit
-engines/demo/models/model-A/features/alpha/packages/api/core/backends/graphql/tests/unit/mod.rs
-engines/demo/models/model-A/features/alpha/packages/api/core/backends/graphql/tests/mod.rs
-engines/demo/models/model-A/features/alpha/packages/api/core/backends/graphql/mod.rs
-engines/demo/models/model-A/features/alpha/packages/api/core/tests
-engines/demo/models/model-A/features/alpha/packages/api/core/tests/integration
-engines/demo/models/model-A/features/alpha/packages/api/core/tests/integration/mod.rs
-engines/demo/models/model-A/features/alpha/packages/api/core/tests/unit
-engines/demo/models/model-A/features/alpha/packages/api/core/tests/unit/mod.rs
-engines/demo/models/model-A/features/alpha/packages/api/core/tests/mod.rs
-engines/demo/models/model-A/features/alpha/packages/api/core/mod.rs
 engines/demo/models/model-A/features/alpha/packages/api/examples
 engines/demo/models/model-A/features/alpha/packages/api/mod.rs
 engines/demo/models/model-A/features/alpha/packages/api/benches
@@ -379,4 +339,13 @@ engines/demo/models/model-A/features/alpha/packages/testing/src/traits/tests/mod
 engines/demo/models/model-A/features/alpha/packages/testing/src/traits/mod.rs
 engines/demo/models/model-A/features/alpha/packages/testing/contrib
 engines/demo/models/model-A/features/alpha/packages/testing/scripts
+engines/README.md
+engines/models
+engines/models/model-A
+engines/models/model-A/features
+engines/models/model-A/features/packages
+engines/models/model-A/features/packages/api
+engines/models/model-A/features/packages/api/README.md
+engines/models/model-A/features/packages/lib
+engines/models/model-A/features/packages/lib/README.md
 config.toml
