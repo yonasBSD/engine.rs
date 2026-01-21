@@ -1,80 +1,43 @@
-use assert_cmd::cargo::cargo_bin_cmd;
-use std::fs;
-use std::path::PathBuf;
+//! Integration test: tree generation for custom modules.
+//!
+//! This refactored version still validates the generated tree structure,
+//! but uses the test harness + config builder DSL for consistency.
 
-use engine_rs_lib::{core::*, traits::*};
+use engine_rs_lib::*;
+use crate::helpers::*;
 
 #[test]
 fn custom_modules_are_generated() {
-    // 1. Create a temp directory
-    let temp = tempfile::tempdir().unwrap();
-    let root = temp.path();
+    // 1. Create an isolated test environment
+    let h = ScaffolderTestHarness::new();
 
-    // 2. Write a config.toml with custom modules
-    fs::write(
-        root.join("config.toml"),
-        r#"
-            projects = ["demo"]
-            features = ["alpha"]
-            packages = ["api"]
+    // 2. Build a config.toml with custom modules using the DSL
+    let cfg = ConfigBuilder::new()
+        .project("demo")
+        .feature("alpha")
+        .package("api")
+        .custom_module("api.core", &["graphql", "grpc", "rest"]);
 
-            [custom_modules.api.core]
-            backends = ["graphql", "grpc", "rest"]
-        "#,
-    )
-    .unwrap();
-
-    // 3. Run the scaffolder
-    cargo_bin_cmd!("engine-rs")
-        .current_dir(root)
-        .arg("run")
-        .assert()
-        .success();
+    // 3. Write config.toml and run the scaffolder
+    h.write_config_builder(cfg);
+    h.run();
 
     // 4. Assert the custom module tree exists
-    let base: PathBuf =
-        root.join("engines/demo/models/model-A/features/alpha/packages/api/core/backends");
+    let base = "engines/demo/models/model-A/features/alpha/packages/api/core/backends";
 
     for backend in ["graphql", "grpc", "rest"] {
-        let dir = base.join(backend);
+        let dir = format!("{}/{}", base, backend);
 
-        assert!(
-            dir.exists(),
-            "backend directory missing: {:?}",
-            dir.display()
-        );
-
-        assert!(
-            dir.join("tests/mod.rs").exists(),
-            "tests/mod.rs missing for {:?}",
-            backend
-        );
-        assert!(
-            dir.join("tests/unit/mod.rs").exists(),
-            "unit tests missing for {:?}",
-            backend
-        );
-        assert!(
-            dir.join("tests/integration/mod.rs").exists(),
-            "integration tests missing for {:?}",
-            backend
-        );
-        assert!(
-            dir.join("mod.rs").exists(),
-            "mod.rs missing for {:?}",
-            backend
-        );
+        h.assert_exists(&dir);
+        h.assert_exists(format!("{}/tests/mod.rs", dir));
+        h.assert_exists(format!("{}/tests/unit/mod.rs", dir));
+        h.assert_exists(format!("{}/tests/integration/mod.rs", dir));
+        h.assert_exists(format!("{}/mod.rs", dir));
     }
 
-    // 5. Verify manifest integrity
-    let fs = RealFS;
-    let scaffolder = Scaffolder::new(fs, root.to_path_buf());
+    // 5. Snapshot the tree for regression coverage
+    h.snapshot_tree("custom_modules_tree_generation");
 
-    let config: Config =
-        toml::from_str(&fs::read_to_string(root.join("config.toml")).unwrap()).unwrap();
-
-    let manifest = scaffolder.run(config).unwrap();
-
-    let result = scaffolder.verify_integrity(manifest);
-    assert!(result.is_ok(), "manifest integrity failed");
+    // 6. Sanity check: ensure the base path appears in the tree
+    h.assert_tree_contains(base);
 }

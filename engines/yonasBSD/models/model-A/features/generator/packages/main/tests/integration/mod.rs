@@ -1,4 +1,7 @@
-// Automated Integration Tests
+//! Automated Integration Tests
+//!
+//! This module wires together all integration test modules.
+
 #[cfg(test)]
 mod custom_modules;
 #[cfg(test)]
