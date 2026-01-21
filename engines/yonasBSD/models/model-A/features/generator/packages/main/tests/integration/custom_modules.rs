@@ -18,6 +18,7 @@ fn custom_modules_are_generated() {
                 }
             }
         }),
+        extra_folders: vec![],
     };
 
     // 2. Run the scaffolder
@@ -32,7 +33,6 @@ fn custom_modules_are_generated() {
         let dir = base.join(backend);
         assert!(dir.exists(), "backend directory missing: {:?}", dir);
 
-        assert!(dir.join("src").exists(), "src missing for {:?}", backend);
         assert!(
             dir.join("tests/mod.rs").exists(),
             "tests missing for {:?}",

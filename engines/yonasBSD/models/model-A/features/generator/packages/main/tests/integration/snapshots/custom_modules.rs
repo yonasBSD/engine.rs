@@ -1,6 +1,6 @@
 use assert_cmd::cargo::cargo_bin_cmd;
-use tempfile::tempdir;
 use std::fs;
+use tempfile::tempdir;
 
 use crate::helpers::{capture_tree, read_file};
 
@@ -37,7 +37,7 @@ fn snapshot_custom_module_tree() {
 
     // Snapshot a specific file (example)
     let mod_rs = read_file(
-        &root.join("engines/demo/models/model-A/features/alpha/packages/api/core/backends/mod.rs")
+        &root.join("engines/demo/models/model-A/features/alpha/packages/api/core/backends/mod.rs"),
     );
 
     insta::assert_snapshot!("backends_mod_rs", mod_rs);
