@@ -7,7 +7,7 @@ mod tests;
 use regex::Regex;
 use serde::Deserialize;
 
-use crate::utils::*;
+use crate::{enums::*, utils::*};
 
 #[derive(Deserialize, Clone, Debug)]
 pub struct ReadmeConfig {
@@ -24,21 +24,6 @@ pub struct Config {
     #[serde(default = "default_packages")]
     pub packages: Vec<String>,
     pub readme: Vec<ReadmeConfig>,
-}
-
-#[derive(Debug)]
-pub enum ConfigError {
-    EmptyList {
-        field: &'static str,
-    },
-    DuplicateValues {
-        field: &'static str,
-        duplicates: Vec<String>,
-    },
-    InvalidName {
-        field: &'static str,
-        value: String,
-    },
 }
 
 impl std::fmt::Display for ConfigError {

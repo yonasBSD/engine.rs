@@ -12,4 +12,4 @@ pub use core::frontends;
 //
 
 #[cfg(test)]
-mod test { }
+mod test {}

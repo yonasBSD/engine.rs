@@ -217,7 +217,7 @@ impl<F: FileSystem> Scaffolder<F> {
             self.fs.create_dir_all(integration_mod.parent().unwrap())?;
 
             self.fs
-                .write_file(&base.join("mod.rs"), "pub mod tests;\n")?;
+                .write_file(&base.join("mod.rs"), "mod tests;\n")?;
 
             let t_content = self
                 .env
