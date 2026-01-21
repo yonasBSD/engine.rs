@@ -10,6 +10,7 @@ mod tests {
             packages: pk.into_iter().map(|s| s.to_string()).collect(),
             readme: vec![],
             custom_modules: HashMap::<String, DirSpec>::new(),
+            extra_folders: vec![],
         }
     }
 

@@ -1,5 +1,5 @@
-use walkdir::WalkDir;
 use std::path::Path;
+use walkdir::WalkDir;
 
 /// Capture a directory tree as a stable, sorted string.
 /// This is perfect for snapshot testing.

@@ -28,6 +28,8 @@ pub struct Config {
     pub readme: Vec<ReadmeConfig>,
     #[serde(default)]
     pub custom_modules: HashMap<String, DirSpec>,
+    #[serde(default)]
+    pub extra_folders: Vec<String>,
 }
 
 impl std::fmt::Display for ConfigError {
@@ -93,6 +95,7 @@ impl Config {
             packages,
             readme,
             custom_modules,
+            extra_folders: vec![],
         }
     }
 
@@ -218,6 +221,7 @@ impl Config {
         check_reserved("projects", &self.projects, &mut errors, &reserved);
         check_reserved("features", &self.features, &mut errors, &reserved);
         check_reserved("packages", &self.packages, &mut errors, &reserved);
+        check_reserved("extra_folders", &self.extra_folders, &mut errors, &reserved);
 
         if errors.is_empty() {
             Ok(())

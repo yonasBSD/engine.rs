@@ -206,13 +206,11 @@ impl<F: FileSystem> Scaffolder<F> {
         ];
 
         for mod_dir in modules {
-            let base = pkg_path.join(mod_dir);
-            let src_dir = base.join("src");
+            let base = pkg_path.join(format!("src/{}", mod_dir));
             let tests_mod = base.join("tests/mod.rs");
             let unit_mod = base.join("tests/unit/mod.rs");
             let integration_mod = base.join("tests/integration/mod.rs");
 
-            self.fs.create_dir_all(&src_dir)?;
             self.fs.create_dir_all(unit_mod.parent().unwrap())?;
             self.fs.create_dir_all(integration_mod.parent().unwrap())?;
 
@@ -238,9 +236,19 @@ impl<F: FileSystem> Scaffolder<F> {
             );
         }
 
-        // 4. Custom module expansions (JSON-like DSL)
+        // 4. Extra directories
+        for extra in EXTRA_TOP_LEVEL_DIRS {
+            self.fs.create_dir_all(&pkg_path.join(extra))?;
+        }
+
+        // 5. Custom module expansions (JSON-like DSL)
         if let Some(spec) = config.custom_modules.get(package) {
             self.generate_custom_tree(manifest, pkg_path, spec)?;
+        }
+
+        // 6. Custom folders
+        for extra in &config.extra_folders {
+            self.fs.create_dir_all(&pkg_path.join(extra))?;
         }
 
         Ok(())
@@ -301,18 +309,19 @@ impl<F: FileSystem> Scaffolder<F> {
         manifest: &mut HashMap<PathBuf, String>,
         dir: &Path,
     ) -> io::Result<()> {
-        let src_dir = dir.join("src");
         let tests_mod = dir.join("tests/mod.rs");
         let unit_mod = dir.join("tests/unit/mod.rs");
         let integration_mod = dir.join("tests/integration/mod.rs");
 
-        self.fs.create_dir_all(&src_dir)?;
+        // Create src + tests
         self.fs.create_dir_all(unit_mod.parent().unwrap())?;
         self.fs.create_dir_all(integration_mod.parent().unwrap())?;
 
+        // mod.rs
         self.fs
             .write_file(&dir.join("mod.rs"), "pub mod tests;\n")?;
 
+        // tests
         self.fs.write_file(&tests_mod, "// Tests\n")?;
         self.fs.write_file(&unit_mod, "// Unit Tests\n")?;
         self.fs

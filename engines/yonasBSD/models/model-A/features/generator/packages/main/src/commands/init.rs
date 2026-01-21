@@ -17,6 +17,7 @@ pub fn cmd_init() -> io::Result<()> {
 projects = ["example-project"]
 features = ["feature-A"]
 packages = ["package-A"]
+extra_folders = ["benches", "contrib", "docs", "examples", "scripts", "vendor"]
 
 [[readme]]
 path = "engines/example-project"
