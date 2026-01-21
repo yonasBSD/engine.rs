@@ -21,6 +21,9 @@ packages = ["package-A"]
 [[readme]]
 path = "engines/example-project"
 file = "readme/example.md.tpl"
+
+[custom_modules.api.core]
+backends = ["graphql", "grpc", "rest"]
 "#;
 
     fs::write("config.toml", default.trim_start())?;
