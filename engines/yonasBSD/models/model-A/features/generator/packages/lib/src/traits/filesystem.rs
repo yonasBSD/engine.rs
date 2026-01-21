@@ -159,15 +159,13 @@ impl<F: FileSystem> Scaffolder<F> {
 
         // 1. Generate READMEs for this project/feature/package combo
         for entry in &config.readme {
-            let tpl_name = if self.env.get_template(&entry.file).is_ok() {
-                &entry.file
-            } else {
-                "internal/readme.tpl"
-            };
+            let tpl_name = self
+                .resolve_template_name(&entry.file)
+                .unwrap_or_else(|| "internal/readme.tpl".to_string());
 
             let rendered = self
                 .env
-                .get_template(tpl_name)
+                .get_template(&tpl_name)
                 .unwrap()
                 .render(ctx.clone())
                 .unwrap();
@@ -335,5 +333,35 @@ impl<F: FileSystem> Scaffolder<F> {
         );
 
         Ok(())
+    }
+
+    fn resolve_template_name(&self, name: &str) -> Option<String> {
+        // 1. Exact match
+        if self.env.get_template(name).is_ok() {
+            return Some(name.to_string());
+        }
+
+        // 2. Strip leading "templates/"
+        if let Some(stripped) = name.strip_prefix("templates/") {
+            if self.env.get_template(stripped).is_ok() {
+                return Some(stripped.to_string());
+            }
+        }
+
+        // 3. Try prefixing "readme/"
+        let prefixed = format!("readme/{}", name);
+        if self.env.get_template(&prefixed).is_ok() {
+            return Some(prefixed);
+        }
+
+        // 4. Try searching by filename only
+        let filename = name.split('/').last().unwrap();
+        for candidate in Asset::iter() {
+            if candidate.ends_with(filename) {
+                return Some(candidate.to_string());
+            }
+        }
+
+        None
     }
 }
