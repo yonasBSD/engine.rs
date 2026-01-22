@@ -3,31 +3,37 @@
 //! This verifies that `{{ project }}`, `{{ model }}`, and `{{ feature }}`
 //! are correctly expanded in readme target paths.
 
-use crate::engine;
 use crate::helpers::*;
-use engine_rs_lib::*;
+use engine_rs_lib::core::public::dsl::prelude::*;
 
 #[test]
-fn snapshot_readme_templated_paths() {
+fn snapshot_readme_templated_paths() -> miette::Result<()> {
     let h = ScaffolderTestHarness::new();
 
-    let cfg = engine!(
-        projects = ["demo"],
-        features = ["alpha"],
-        packages = ["api", "lib"],
-        readme("readme/example.md.tpl", "engines/{{ project }}"),
-        readme(
+    let cfg = ProjectsPhase::new()
+        .add_project("demo")
+        .next()
+        .enable_feature("alpha")
+        .next()
+        .include_package("api")
+        .include_package("lib")
+        .next()
+        .add_readme("readme/example.md.tpl", "engines/{{ project }}")
+        .add_readme(
             "readme/api.md.tpl",
-            "engines/{{ project }}/models/{{ model }}/features/{{ feature }}/packages/api"
-        ),
-        readme(
-            "readme/lib.md.tpl",
-            "engines/{{ project }}/models/{{ model }}/features/{{ feature }}/packages/lib"
+            "engines/{{ project }}/models/{{ model }}/features/{{ feature }}/packages/api",
         )
-    );
+        .add_readme(
+            "readme/lib.md.tpl",
+            "engines/{{ project }}/models/{{ model }}/features/{{ feature }}/packages/lib",
+        )
+        .build();
 
-    h.write_config_builder(cfg);
+    h.write_config(&cfg);
     h.run();
+
+    // README files must exist
+    h.assert_all_readmes_exist(&cfg)?;
 
     // Snapshot the full tree for context
     h.snapshot_tree("tree");
@@ -42,4 +48,6 @@ fn snapshot_readme_templated_paths() {
         "readme_lib",
         "engines/demo/models/model-A/features/alpha/packages/lib/README.md",
     );
+
+    Ok(())
 }

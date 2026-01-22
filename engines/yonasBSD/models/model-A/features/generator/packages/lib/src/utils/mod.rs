@@ -1,4 +1,5 @@
 pub mod tests;
+pub mod path_normalization;
 
 #[must_use]
 pub fn default_projects() -> Vec<String> {

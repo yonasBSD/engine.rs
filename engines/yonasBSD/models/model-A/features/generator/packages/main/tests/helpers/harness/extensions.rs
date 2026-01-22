@@ -1,30 +1,52 @@
 use assert_cmd::cargo::cargo_bin_cmd;
-use std::fs;
+use assert_fs::fixture::ChildPath;
+use assert_fs::prelude::*;
+use predicates::prelude::*;
 use std::path::Path;
 
 use crate::helpers::*;
 use engine_rs_lib::*;
 
+use miette::{Diagnostic, Result};
+use thiserror::Error;
+
+#[derive(Error, Debug, Diagnostic)]
+pub enum ScaffolderError {
+    #[error("Template resolution failed: Directory was not created")]
+    #[diagnostic(
+        code(scaffolder::path_missing),
+        help("The engine failed to resolve placeholders or create this directory: {path}")
+    )]
+    DirectoryMissing { path: String },
+
+    #[error("README file missing in generated directory")]
+    #[diagnostic(
+        code(scaffolder::readme_missing),
+        help("The directory exists, but README.md is missing at: {path}")
+    )]
+    ReadmeMissing { path: String },
+}
+
 /// Trait providing all harness functionality.
 /// Keeps the core struct clean and focused.
 pub trait HarnessExtensions {
-    fn write_config(&self, contents: &str);
-    fn write_config_builder(&self, builder: ConfigBuilder);
+    fn write_config(&self, cfg: &Config);
     fn run(&self);
     fn run_init(&self);
     fn run_validate(&self);
     fn read(&self, rel: impl AsRef<Path>) -> String;
     fn tree(&self) -> String;
     fn assert_exists(&self, rel: impl AsRef<Path>);
+    fn assert_all_readmes_exist(&self, cfg: &Config) -> Result<()>;
 }
 
 impl HarnessExtensions for ScaffolderTestHarness {
-    fn write_config(&self, contents: &str) {
-        fs::write(self.path().join("config.toml"), contents).unwrap();
-    }
+    fn write_config(&self, cfg: &Config) {
+        let contents = toml::to_string_pretty(cfg).expect("Config must be serializable to TOML");
 
-    fn write_config_builder(&self, builder: ConfigBuilder) {
-        self.write_config(&builder.build());
+        ChildPath::new(self.path().join("config.toml"))
+            .write_str(&contents)
+            .expect("failed to write config.toml");
     }
 
     fn run(&self) {
@@ -52,7 +74,11 @@ impl HarnessExtensions for ScaffolderTestHarness {
     }
 
     fn read(&self, rel: impl AsRef<Path>) -> String {
-        read_file(self.path().join(rel))
+        let file = ChildPath::new(self.path().join(rel.as_ref()));
+
+        file.assert(predicate::path::is_file());
+        std::fs::read_to_string(&file)
+            .expect("failed to read file content after successful assertion")
     }
 
     fn tree(&self) -> String {
@@ -60,6 +86,56 @@ impl HarnessExtensions for ScaffolderTestHarness {
     }
 
     fn assert_exists(&self, rel: impl AsRef<Path>) {
-        assert!(self.path().join(rel).exists());
+        let child = ChildPath::new(self.path().join(rel));
+        child.assert(predicate::path::exists());
+    }
+
+    fn assert_all_readmes_exist(&self, cfg: &Config) -> miette::Result<()> {
+        use engine_rs_lib::utils::path_normalization::normalize_path_str;
+        use minijinja::{Environment, context};
+
+        // Build the same template environment the scaffolder uses
+        let env = Environment::new();
+
+        for project in &cfg.projects {
+            for feature in &cfg.features {
+                for package in &cfg.packages {
+                    let ctx = context!(
+                        project => project,
+                        feature => feature,
+                        package => package,
+                        model => "model-A",
+                    );
+
+                    for readme in &cfg.readmes {
+                        // Render the templated path
+                        let rendered = env
+                            .render_str(&readme.path, ctx.clone())
+                            .expect("failed to render readme path");
+
+                        let normalized = normalize_path_str(&rendered);
+
+                        let target_dir = self.path().join(&normalized);
+                        let readme_file = target_dir.join("README.md");
+
+                        if !target_dir.exists() {
+                            return Err(ScaffolderError::DirectoryMissing {
+                                path: target_dir.display().to_string(),
+                            }
+                            .into());
+                        }
+
+                        if !readme_file.is_file() {
+                            return Err(ScaffolderError::ReadmeMissing {
+                                path: readme_file.display().to_string(),
+                            }
+                            .into());
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(())
     }
 }

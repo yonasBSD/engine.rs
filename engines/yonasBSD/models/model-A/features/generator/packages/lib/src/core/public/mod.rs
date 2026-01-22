@@ -2,13 +2,13 @@ pub mod backends;
 pub mod frontends;
 pub mod tests;
 
-pub mod config;
+pub mod dsl;
 pub mod embed;
 pub mod enums;
 pub mod models;
 pub mod sync;
 
-pub use config::*;
+pub use dsl::*;
 pub use embed::*;
 pub use enums::*;
 pub use models::*;
