@@ -1,7 +1,13 @@
 // ==========================================================
 // FILESYSTEM ABSTRACTION
 // ==========================================================
-use crate::{core::*, enums::*};
+use crate::{
+    core::{
+        Asset, Config, DEFAULT_README_TPL, EXTRA_TOP_LEVEL_DIRS, TPL_CARGO,
+        TPL_MOD_EXPORT, TPL_MOD_TESTS,
+    },
+    enums::DirSpec,
+};
 
 use blake3;
 use minijinja::{Environment, context};
@@ -72,7 +78,7 @@ impl<F: FileSystem> Scaffolder<F> {
         blake3::hash(content.as_bytes()).to_hex().to_string()
     }
 
-    pub fn run(&self, config: Config) -> io::Result<HashMap<PathBuf, String>> {
+    pub fn run(&self, config: &Config) -> io::Result<HashMap<PathBuf, String>> {
         let mut manifest = HashMap::new();
 
         // Default sub-packages that always exist per feature
@@ -80,11 +86,10 @@ impl<F: FileSystem> Scaffolder<F> {
 
         // Cartesian product: projects × features × packages
         for project in &config.projects {
-            let project_root = self.base_path.join(format!("engines/{}", project));
+            let project_root = self.base_path.join(format!("engines/{project}"));
 
             for feature in &config.features {
-                let feature_root =
-                    project_root.join(format!("models/model-A/features/{}", feature));
+                let feature_root = project_root.join(format!("models/model-A/features/{feature}"));
                 let packages_root = feature_root.join("packages");
 
                 // 1. Generate Cargo.toml for this feature
@@ -115,7 +120,7 @@ impl<F: FileSystem> Scaffolder<F> {
                     let pkg_path = packages_root.join(default_pkg);
                     self.generate_package_structure(
                         &mut manifest,
-                        &config,
+                        config,
                         project,
                         feature,
                         default_pkg,
@@ -128,7 +133,7 @@ impl<F: FileSystem> Scaffolder<F> {
                     let pkg_path = packages_root.join(package);
                     self.generate_package_structure(
                         &mut manifest,
-                        &config,
+                        config,
                         project,
                         feature,
                         package,
@@ -217,7 +222,7 @@ impl<F: FileSystem> Scaffolder<F> {
         ];
 
         for mod_dir in modules {
-            let base = pkg_path.join(format!("src/{}", mod_dir));
+            let base = pkg_path.join(format!("src/{mod_dir}"));
             let tests_mod = base.join("tests/mod.rs");
             let unit_mod = base.join("tests/unit/mod.rs");
             let integration_mod = base.join("tests/integration/mod.rs");
@@ -276,10 +281,10 @@ impl<F: FileSystem> Scaffolder<F> {
             match self.fs.read_to_string(&path) {
                 Ok(content) => {
                     if self.calculate_hash(&content) != expected_hash {
-                        errors.push(format!("Hash Mismatch: {:?}", path));
+                        errors.push(format!("Hash Mismatch: {path:?}"));
                     }
                 }
-                Err(_) => errors.push(format!("File Missing: {:?}", path)),
+                Err(_) => errors.push(format!("File Missing: {path:?}")),
             }
         }
 
@@ -355,20 +360,20 @@ impl<F: FileSystem> Scaffolder<F> {
         }
 
         // 2. Strip leading "templates/"
-        if let Some(stripped) = name.strip_prefix("templates/") {
-            if self.env.get_template(stripped).is_ok() {
-                return Some(stripped.to_string());
-            }
+        if let Some(stripped) = name.strip_prefix("templates/")
+            && self.env.get_template(stripped).is_ok()
+        {
+            return Some(stripped.to_string());
         }
 
         // 3. Try prefixing "readme/"
-        let prefixed = format!("readme/{}", name);
+        let prefixed = format!("readme/{name}");
         if self.env.get_template(&prefixed).is_ok() {
             return Some(prefixed);
         }
 
         // 4. Try searching by filename only
-        let filename = name.split('/').last().unwrap();
+        let filename = name.split('/').next_back().unwrap();
         for candidate in Asset::iter() {
             if candidate.ends_with(filename) {
                 return Some(candidate.to_string());

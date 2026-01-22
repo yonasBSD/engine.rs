@@ -5,11 +5,11 @@ use std::collections::HashMap;
 #[serde(untagged)]
 pub enum DirSpec {
     List(Vec<String>),
-    Tree(HashMap<String, DirSpec>),
+    Tree(HashMap<String, Self>),
 }
 
 impl Default for DirSpec {
     fn default() -> Self {
-        DirSpec::List(vec![])
+        Self::List(vec![])
     }
 }

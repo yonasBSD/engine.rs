@@ -1,4 +1,6 @@
-use crate::*;
+use crate::{
+    is_quiet, load_config, print_explain_rules, print_json_ok, print_json_validation_errors,
+};
 
 use cliclack::{
     log::{error, success, warning},
@@ -19,7 +21,7 @@ pub fn cmd_validate(explain: bool, quiet: bool, json: bool) -> io::Result<()> {
     }
 
     match config.validate() {
-        Ok(_) => {
+        Ok(()) => {
             if json {
                 print_json_ok(&config);
             } else if !quiet {
@@ -33,7 +35,7 @@ pub fn cmd_validate(explain: bool, quiet: bool, json: bool) -> io::Result<()> {
             } else {
                 let _ = error("Validation Errors:");
                 for err in errors {
-                    let _ = warning(format!("{}", err));
+                    let _ = warning(format!("{err}"));
                 }
             }
             std::process::exit(1);

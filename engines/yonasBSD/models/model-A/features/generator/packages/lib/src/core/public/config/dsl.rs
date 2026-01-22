@@ -1,4 +1,4 @@
-use crate::builder::*;
+use crate::builder::ConfigBuilder;
 
 /// Fluent DSL for building config.toml in tests.
 pub trait ConfigBuilderDsl {
@@ -31,8 +31,10 @@ impl ConfigBuilderDsl for ConfigBuilder {
     }
 
     fn custom_module(mut self, path: &str, items: &[&str]) -> Self {
-        self.custom_modules
-            .push((path.into(), items.iter().map(|s| s.to_string()).collect()));
+        self.custom_modules.push((
+            path.into(),
+            items.iter().map(std::string::ToString::to_string).collect(),
+        ));
         self
     }
 }

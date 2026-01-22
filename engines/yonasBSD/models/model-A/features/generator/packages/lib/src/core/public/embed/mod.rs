@@ -19,7 +19,7 @@ members = [
 ]
 resolver = "2""#;
 
-pub const TPL_MOD_EXPORT: &str = r#"pub mod core;
+pub const TPL_MOD_EXPORT: &str = r"pub mod core;
 pub mod enums;
 pub mod macros;
 pub mod traits;
@@ -28,7 +28,7 @@ pub mod utils;
 // Core internal exports
 pub mod backends;
 pub mod frontends;
-"#;
+";
 
 pub const TPL_MOD_TESTS: &str = "pub mod unit;\npub mod integration;\n";
 

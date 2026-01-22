@@ -4,19 +4,19 @@ use std::path::Path;
 use std::thread;
 use std::time::Duration;
 
-use engine_rs_lib::traits::*;
+use engine_rs_lib::traits::FileSystem;
 
 // ==========================================================
 // 1. UI DECORATOR (LoggingFS)
 // ==========================================================
-/// A decorator for any FileSystem that updates the Clack progress bar
+/// A decorator for any `FileSystem` that updates the Clack progress bar
 pub struct LoggingFS<'a, F: FileSystem> {
     inner: F,
     pb: &'a cliclack::ProgressBar,
 }
 
 impl<'a, F: FileSystem> LoggingFS<'a, F> {
-    pub fn new(inner: F, pb: &'a cliclack::ProgressBar) -> Self {
+    pub const fn new(inner: F, pb: &'a cliclack::ProgressBar) -> Self {
         Self { inner, pb }
     }
 
@@ -39,7 +39,7 @@ impl<'a, F: FileSystem> LoggingFS<'a, F> {
     }
 }
 
-impl<'a, F: FileSystem> FileSystem for LoggingFS<'a, F> {
+impl<F: FileSystem> FileSystem for LoggingFS<'_, F> {
     fn create_dir_all(&self, path: &Path) -> io::Result<()> {
         self.log_ephemeral("mkdir", path);
         self.inner.create_dir_all(path)

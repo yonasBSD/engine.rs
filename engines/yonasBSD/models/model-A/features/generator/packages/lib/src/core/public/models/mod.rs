@@ -8,7 +8,12 @@ use regex::Regex;
 use serde::Deserialize;
 use std::collections::HashMap;
 
-use crate::{core::*, enums::*, prelude::*, utils::*};
+use crate::{
+    core::ConfigError,
+    enums::DirSpec,
+    prelude::*,
+    utils::{default_features, default_packages, default_projects},
+};
 
 #[derive(Deserialize, Clone, Debug)]
 pub struct ReadmeConfig {
@@ -35,21 +40,19 @@ pub struct Config {
 impl std::fmt::Display for ConfigError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ConfigError::EmptyList { field } => {
-                write!(f, "The list '{}' cannot be empty.", field)
+            Self::EmptyList { field } => {
+                write!(f, "The list '{field}' cannot be empty.")
             }
-            ConfigError::DuplicateValues { field, duplicates } => {
+            Self::DuplicateValues { field, duplicates } => {
                 write!(
                     f,
-                    "The list '{}' contains duplicate values: {:?}",
-                    field, duplicates
+                    "The list '{field}' contains duplicate values: {duplicates:?}"
                 )
             }
-            ConfigError::InvalidName { field, value } => {
+            Self::InvalidName { field, value } => {
                 write!(
                     f,
-                    "Invalid name '{}' in field '{}'. Names must match ^[a-zA-Z0-9_-]+$",
-                    value, field
+                    "Invalid name '{value}' in field '{field}'. Names must match ^[a-zA-Z0-9_-]+$"
                 )
             }
         }
@@ -75,6 +78,7 @@ fn check_reserved(
 impl std::error::Error for ConfigError {}
 
 impl Config {
+    #[must_use]
     pub fn new(
         projects: Vec<String>,
         features: Vec<String>,
@@ -188,8 +192,7 @@ impl Config {
             for feature in &self.features {
                 for package in &self.packages {
                     let path = format!(
-                        "engines/{}/models/model-A/features/{}/packages/{}",
-                        project, feature, package
+                        "engines/{project}/models/model-A/features/{feature}/packages/{package}"
                     );
 
                     if !seen_paths.insert(path.clone()) {

@@ -1,4 +1,4 @@
-use crate::utils::*;
+use crate::utils::ui;
 
 use std::fs;
 use std::io;
@@ -9,7 +9,7 @@ use std::io;
 
 pub fn cmd_init() -> io::Result<()> {
     if std::path::Path::new("config.toml").exists() {
-        let _ = ui::error("config.toml already exists.");
+        let () = ui::error("config.toml already exists.");
         std::process::exit(1);
     }
 
