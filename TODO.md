@@ -1,4 +1,12 @@
 
+integrate this with your global EngineError type
+
+unify ScaffolderError + EngineError
+
+wire spans from your DSL into these diagnostics
+
+snapshot Ariadne output in your test harness
+
     rewriting the snapshots
 
     generating the new test config factory

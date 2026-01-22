@@ -13,6 +13,9 @@ rust-embed = "8.11"
 serde = { version = "1.0", features = ["derive"] }
 loom = { version = "0.7", optional = true }
 regex = "1.12.2"
+miette = { version = "7.6.0", features = ["fancy", "syntect-highlighter"] }
+ariadne = { version = "0.6.0", features = ["auto-color"] }
+thiserror = "2.0.18"
 
 [dev-dependencies]
 tempfile = "3.24"

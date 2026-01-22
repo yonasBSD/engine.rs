@@ -2,14 +2,12 @@ mod commands;
 mod traits;
 mod utils;
 
-use commands::{Cli, Commands, cmd_init, cmd_run, cmd_validate};
-use traits::LoggingFS;
-use utils::{
-    is_quiet, load_config, print_explain_rules, print_json_integrity_errors, print_json_ok,
-    print_json_validation_errors,
-};
+use commands::*;
+use traits::*;
+use utils::*;
 
 use clap::Parser;
+use engine_rs_lib::ariadne_handler::install_ariadne_hook;
 use std::io;
 
 //
@@ -17,6 +15,8 @@ use std::io;
 //
 
 fn main() -> io::Result<()> {
+    install_ariadne_hook();
+
     let cli = Cli::parse();
 
     match cli.command {
@@ -32,5 +32,7 @@ fn main() -> io::Result<()> {
             json,
             debug,
         } => cmd_run(explain, quiet, json, debug),
-    }
+    }?;
+
+    Ok(())
 }

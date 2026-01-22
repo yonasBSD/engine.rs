@@ -35,7 +35,7 @@ impl FinalPhase {
         self
     }
 
-    #[must_use] 
+    #[must_use]
     pub fn build(self) -> Config {
         Config {
             projects: self.projects,
