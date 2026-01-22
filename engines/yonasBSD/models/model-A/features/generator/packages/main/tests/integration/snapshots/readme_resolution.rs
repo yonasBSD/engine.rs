@@ -10,21 +10,22 @@ fn snapshot_readme_template_resolution() -> miette::Result<()> {
     let h = ScaffolderTestHarness::new();
 
     let cfg = ProjectsPhase::new()
-        .add_project("demo")
+        .project("demo")
         .next()
-        .enable_feature("alpha")
+        .feature("alpha")
         .next()
-        .include_package("api")
+        .package("api")
         .next()
-        .add_readme("readme/example.md.tpl", "engines/demo")
-        .add_readme(
+        .readme("readme/example.md.tpl", "engines/demo")
+        .readme(
             "readme/api.md.tpl",
             "engines/{{ project }}/models/{{ model }}/features/{{ feature }}/packages/api",
         )
-        .add_readme(
+        .readme(
             "readme/lib.md.tpl",
             "engines/{{ project }}/models/{{ model }}/features/{{ feature }}/packages/lib",
         )
+        .finish()
         .build();
 
     h.write_config(&cfg);

@@ -7,7 +7,7 @@ use traits::*;
 use utils::*;
 
 use clap::Parser;
-use engine_rs_lib::ariadne_handler::install_ariadne_hook;
+use engine_rs_lib::handlers::install_ariadne_hook;
 use std::io;
 
 //

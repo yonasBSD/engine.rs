@@ -97,15 +97,15 @@ impl HarnessExtensions for ScaffolderTestHarness {
                         let readme_file = target_dir.join("README.md");
 
                         if !target_dir.exists() {
-                            ScaffolderError::DirectoryMissing {
+                            Err(ScaffolderError::DirectoryMissing {
                                 path: target_dir.display().to_string(),
-                            }?;
+                            })?;
                         }
 
                         if !readme_file.is_file() {
-                            ScaffolderError::ReadmeMissing {
+                            Err(ScaffolderError::ReadmeMissing {
                                 path: readme_file.display().to_string(),
-                            }?;
+                            })?;
                         }
                     }
                 }
