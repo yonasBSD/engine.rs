@@ -2,31 +2,39 @@
 //!
 //! This verifies that readme templates are rendered into the expected locations.
 
-use crate::helpers::{HarnessExtensions, HarnessSnapshotExtensions, ScaffolderTestHarness};
+use crate::helpers::*;
+use engine_rs_lib::core::public::dsl::prelude::*;
 
 #[test]
-fn snapshot_readme_template_resolution() {
+fn snapshot_readme_template_resolution() -> miette::Result<()> {
     let h = ScaffolderTestHarness::new();
 
-    h.write_config(
-        r#"
-        projects = ["demo"]
-        features = ["alpha"]
-        packages = ["api"]
+    let cfg = ProjectsPhase::new()
+        .add_project("demo")
+        .next()
+        .enable_feature("alpha")
+        .next()
+        .include_package("api")
+        .next()
+        .add_readme("readme/example.md.tpl", "engines/demo")
+        .add_readme(
+            "readme/api.md.tpl",
+            "engines/{{ project }}/models/{{ model }}/features/{{ feature }}/packages/api",
+        )
+        .add_readme(
+            "readme/lib.md.tpl",
+            "engines/{{ project }}/models/{{ model }}/features/{{ feature }}/packages/lib",
+        )
+        .build();
 
-        [[readme]]
-        path = "engines/demo"
-        file = "readme/example.md.tpl"
-
-        [[readme]]
-        path = "engines/demo/models"
-        file = "readme/benches.md.tpl"
-    "#,
-    );
-
+    h.write_config(&cfg);
     h.run();
+
+    // README files must exist
+    h.assert_all_readmes_exist(&cfg)?;
 
     // Snapshot the rendered README files
     h.snapshot_file("readme_demo", "engines/demo/README.md");
-    h.snapshot_file("readme_models", "engines/demo/models/README.md");
+
+    Ok(())
 }

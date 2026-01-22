@@ -5,7 +5,7 @@
 mod tests;
 
 use regex::Regex;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 use crate::{
@@ -15,13 +15,13 @@ use crate::{
     utils::{default_features, default_packages, default_projects},
 };
 
-#[derive(Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ReadmeConfig {
     pub path: String,
     pub file: String,
 }
 
-#[derive(Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Config {
     #[serde(default = "default_projects")]
     pub projects: Vec<String>,
@@ -30,7 +30,7 @@ pub struct Config {
     #[serde(default = "default_packages")]
     pub packages: Vec<String>,
     #[serde(default)]
-    pub readme: Vec<ReadmeConfig>,
+    pub readmes: Vec<ReadmeConfig>,
     #[serde(default)]
     pub custom_modules: HashMap<String, DirSpec>,
     #[serde(default)]
@@ -83,7 +83,7 @@ impl Config {
         projects: Vec<String>,
         features: Vec<String>,
         packages: Vec<String>,
-        readme: Vec<ReadmeConfig>,
+        readmes: Vec<ReadmeConfig>,
     ) -> Self {
         let custom_modules = dirs!({
             "api" => {
@@ -97,7 +97,7 @@ impl Config {
             projects,
             features,
             packages,
-            readme,
+            readmes,
             custom_modules,
             extra_folders: vec![],
         }

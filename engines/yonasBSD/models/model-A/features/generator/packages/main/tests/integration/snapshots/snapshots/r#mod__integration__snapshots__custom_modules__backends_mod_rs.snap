@@ -1,5 +1,0 @@
----
-source: engines/yonasBSD/models/model-A/features/generator/packages/main/tests/integration/snapshots/custom_modules.rs
-expression: mod_rs
----
-pub mod tests;

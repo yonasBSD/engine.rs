@@ -8,7 +8,7 @@ mod tests {
             projects: p.into_iter().map(|s| s.to_string()).collect(),
             features: f.into_iter().map(|s| s.to_string()).collect(),
             packages: pk.into_iter().map(|s| s.to_string()).collect(),
-            readme: vec![],
+            readmes: vec![],
             custom_modules: HashMap::<String, DirSpec>::new(),
             extra_folders: vec![],
         }

@@ -3,8 +3,8 @@
 // ==========================================================
 use crate::{
     core::{
-        Asset, Config, DEFAULT_README_TPL, EXTRA_TOP_LEVEL_DIRS, TPL_CARGO,
-        TPL_MOD_EXPORT, TPL_MOD_TESTS,
+        Asset, Config, DEFAULT_README_TPL, EXTRA_TOP_LEVEL_DIRS, TPL_CARGO, TPL_MOD_EXPORT,
+        TPL_MOD_TESTS,
     },
     enums::DirSpec,
 };
@@ -164,7 +164,7 @@ impl<F: FileSystem> Scaffolder<F> {
         );
 
         // 1. Generate READMEs for this project/feature/package combo
-        for entry in &config.readme {
+        for entry in &config.readmes {
             // Resolve template name (your existing logic)
             let tpl_name = self
                 .resolve_template_name(&entry.file)
