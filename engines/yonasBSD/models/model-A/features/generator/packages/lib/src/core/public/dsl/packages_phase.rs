@@ -42,7 +42,7 @@ impl PackagesPhase {
         self
     }
 
-    #[must_use] 
+    #[must_use]
     pub fn next(self) -> FinalPhase {
         FinalPhase {
             projects: self.projects,

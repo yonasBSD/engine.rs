@@ -7,26 +7,6 @@ use std::path::Path;
 use crate::helpers::*;
 use engine_rs_lib::*;
 
-use miette::{Diagnostic, Result};
-use thiserror::Error;
-
-#[derive(Error, Debug, Diagnostic)]
-pub enum ScaffolderError {
-    #[error("Template resolution failed: Directory was not created")]
-    #[diagnostic(
-        code(scaffolder::path_missing),
-        help("The engine failed to resolve placeholders or create this directory: {path}")
-    )]
-    DirectoryMissing { path: String },
-
-    #[error("README file missing in generated directory")]
-    #[diagnostic(
-        code(scaffolder::readme_missing),
-        help("The directory exists, but README.md is missing at: {path}")
-    )]
-    ReadmeMissing { path: String },
-}
-
 /// Trait providing all harness functionality.
 /// Keeps the core struct clean and focused.
 pub trait HarnessExtensions {
@@ -37,7 +17,7 @@ pub trait HarnessExtensions {
     fn read(&self, rel: impl AsRef<Path>) -> String;
     fn tree(&self) -> String;
     fn assert_exists(&self, rel: impl AsRef<Path>);
-    fn assert_all_readmes_exist(&self, cfg: &Config) -> Result<()>;
+    fn assert_all_readmes_exist(&self, cfg: &Config) -> Result<(), EngineError>;
 }
 
 impl HarnessExtensions for ScaffolderTestHarness {
@@ -90,11 +70,10 @@ impl HarnessExtensions for ScaffolderTestHarness {
         child.assert(predicate::path::exists());
     }
 
-    fn assert_all_readmes_exist(&self, cfg: &Config) -> miette::Result<()> {
+    fn assert_all_readmes_exist(&self, cfg: &Config) -> Result<(), EngineError> {
         use engine_rs_lib::utils::path_normalization::normalize_path_str;
         use minijinja::{Environment, context};
 
-        // Build the same template environment the scaffolder uses
         let env = Environment::new();
 
         for project in &cfg.projects {
@@ -108,7 +87,6 @@ impl HarnessExtensions for ScaffolderTestHarness {
                     );
 
                     for readme in &cfg.readmes {
-                        // Render the templated path
                         let rendered = env
                             .render_str(&readme.path, ctx.clone())
                             .expect("failed to render readme path");
@@ -119,17 +97,15 @@ impl HarnessExtensions for ScaffolderTestHarness {
                         let readme_file = target_dir.join("README.md");
 
                         if !target_dir.exists() {
-                            return Err(ScaffolderError::DirectoryMissing {
+                            ScaffolderError::DirectoryMissing {
                                 path: target_dir.display().to_string(),
-                            }
-                            .into());
+                            }?;
                         }
 
                         if !readme_file.is_file() {
-                            return Err(ScaffolderError::ReadmeMissing {
+                            ScaffolderError::ReadmeMissing {
                                 path: readme_file.display().to_string(),
-                            }
-                            .into());
+                            }?;
                         }
                     }
                 }

@@ -26,11 +26,21 @@ pub fn insert_custom_module(
 fn build_spec(segments: &[&str], backends: &[&str]) -> DirSpec {
     // No nested segments: just a list of backends
     if segments.is_empty() {
-        return DirSpec::List(backends.iter().map(std::string::ToString::to_string).collect());
+        return DirSpec::List(
+            backends
+                .iter()
+                .map(std::string::ToString::to_string)
+                .collect(),
+        );
     }
 
     // Start from the leaf (backends list) and wrap upwards
-    let mut current = DirSpec::List(backends.iter().map(std::string::ToString::to_string).collect());
+    let mut current = DirSpec::List(
+        backends
+            .iter()
+            .map(std::string::ToString::to_string)
+            .collect(),
+    );
 
     for seg in segments.iter().rev() {
         let mut map = HashMap::new();
