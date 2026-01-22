@@ -8,10 +8,12 @@ pub struct ConfigBuilder {
 }
 
 impl ConfigBuilder {
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
 
+    #[must_use]
     pub fn build(self) -> String {
         let mut out = String::new();
 
@@ -26,14 +28,11 @@ impl ConfigBuilder {
         }
 
         for (file, path) in self.readmes {
-            out += &format!("\n[[readme]]\nfile = {:?}\npath = {:?}\n", file, path);
+            out += &format!("\n[[readme]]\nfile = {file:?}\npath = {path:?}\n");
         }
 
         for (module_path, items) in self.custom_modules {
-            out += &format!(
-                "\n[custom_modules.{}]\nbackends = {:?}\n",
-                module_path, items
-            );
+            out += &format!("\n[custom_modules.{module_path}]\nbackends = {items:?}\n");
         }
 
         out

@@ -15,21 +15,15 @@ use std::fs;
 //
 
 pub fn load_config() -> Config {
-    let raw = match fs::read_to_string("config.toml") {
-        Ok(c) => c,
-        Err(_) => {
-            let _ = error("config.toml not found. Run `engine-rs init` first.");
-            std::process::exit(1);
-        }
-    };
+    let raw = fs::read_to_string("config.toml").unwrap_or_else(|_| {
+        let _ = error("config.toml not found. Run `engine-rs init` first.");
+        std::process::exit(1);
+    });
 
-    match toml::from_str(&raw) {
-        Ok(cfg) => cfg,
-        Err(_) => {
-            let _ = error("Invalid TOML in config.toml");
-            std::process::exit(1);
-        }
-    }
+    toml::from_str(&raw).unwrap_or_else(|_| {
+        let _ = error("Invalid TOML in config.toml");
+        std::process::exit(1);
+    })
 }
 
 //
@@ -49,7 +43,7 @@ pub fn print_explain_rules() {
     let _ = step("No two combinations may generate the same filesystem path");
 }
 
-pub fn is_quiet(quiet: bool, json: bool) -> bool {
+pub const fn is_quiet(quiet: bool, json: bool) -> bool {
     quiet || json
 }
 
@@ -60,15 +54,15 @@ pub fn print_json_ok(config: &Config) {
         "features": config.features,
         "packages": config.packages,
     });
-    println!("{}", out);
+    println!("{out}");
 }
 
 pub fn print_json_validation_errors(errors: &[ConfigError]) {
     let out = serde_json::json!({
         "status": "error",
-        "errors": errors.iter().map(|e| e.to_string()).collect::<Vec<_>>(),
+        "errors": errors.iter().map(std::string::ToString::to_string).collect::<Vec<_>>(),
     });
-    println!("{}", out);
+    println!("{out}");
 }
 
 pub fn print_json_integrity_errors(errors: &[String]) {
@@ -76,21 +70,21 @@ pub fn print_json_integrity_errors(errors: &[String]) {
         "status": "error",
         "errors": errors,
     });
-    println!("{}", out);
+    println!("{out}");
 }
 
 pub mod ui {
     pub fn success(msg: &str) {
-        println!("\n\x1b[32m✔\x1b[0m {}", msg);
+        println!("\n\x1b[32m✔\x1b[0m {msg}");
     }
 
     pub fn error(msg: &str) {
         // Red "✘" followed by reset
-        eprintln!("\n\x1b[1;31m✘\x1b[0m {}", msg);
+        eprintln!("\n\x1b[1;31m✘\x1b[0m {msg}");
     }
 
     #[allow(dead_code)]
     pub fn warn(msg: &str) {
-        eprintln!("\n\x1b[33m⚠\x1b[0m {}", msg);
+        eprintln!("\n\x1b[33m⚠\x1b[0m {msg}");
     }
 }

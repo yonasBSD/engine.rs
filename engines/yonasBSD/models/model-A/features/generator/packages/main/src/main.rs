@@ -2,9 +2,12 @@ mod commands;
 mod traits;
 mod utils;
 
-use commands::*;
-use traits::*;
-use utils::*;
+use commands::{Cli, Commands, cmd_init, cmd_run, cmd_validate};
+use traits::LoggingFS;
+use utils::{
+    is_quiet, load_config, print_explain_rules, print_json_integrity_errors, print_json_ok,
+    print_json_validation_errors,
+};
 
 use clap::Parser;
 use std::io;

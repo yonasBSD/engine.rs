@@ -6,7 +6,7 @@ macro_rules! engine {
         packages = [$($pkg:expr),*],
         $($rest:tt)*
     ) => {{
-        let mut b = crate::ConfigBuilder::new();
+        let mut b = $crate::ConfigBuilder::new();
         $( b = b.project($proj); )*
         $( b = b.feature($feat); )*
         $( b = b.package($pkg); )*

@@ -1,4 +1,7 @@
-use crate::*;
+use crate::{
+    LoggingFS, is_quiet, load_config, print_explain_rules, print_json_integrity_errors,
+    print_json_ok, print_json_validation_errors,
+};
 use engine_rs_lib::{traits::RealFS, traits::Scaffolder};
 
 use cliclack::{
@@ -28,7 +31,7 @@ pub fn cmd_run(explain: bool, quiet: bool, json: bool, debug: bool) -> io::Resul
         } else {
             let _ = error("Validation Errors:");
             for err in errors {
-                let _ = warning(format!("{}", err));
+                let _ = warning(format!("{err}"));
             }
         }
         std::process::exit(1);
@@ -45,10 +48,10 @@ pub fn cmd_run(explain: bool, quiet: bool, json: bool, debug: bool) -> io::Resul
     let scaffolder = Scaffolder::new(lfs, PathBuf::from("."));
 
     if !is_quiet(quiet, json) {
-        pb.start(format!("Building structures for: {}", project_list));
+        pb.start(format!("Building structures for: {project_list}"));
     }
 
-    let manifest = scaffolder.run(config.clone())?;
+    let manifest = scaffolder.run(&config)?;
 
     scaffolder.fs.clear_ui_lines();
 
@@ -96,7 +99,7 @@ pub fn cmd_run(explain: bool, quiet: bool, json: bool, debug: bool) -> io::Resul
                 s.stop("Integrity Compromised!");
                 let _ = error("Integrity check failed:");
                 for err in errors {
-                    let _ = warning(format!("{}", err));
+                    let _ = warning(err.clone());
                 }
             }
             std::process::exit(1);
