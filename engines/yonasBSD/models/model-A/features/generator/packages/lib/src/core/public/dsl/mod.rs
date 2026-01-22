@@ -1,6 +1,7 @@
 mod custom_modules;
 pub mod features_phase;
 pub mod final_phase;
+pub mod node;
 pub mod packages_phase;
 pub mod projects_phase;
 
@@ -13,3 +14,5 @@ pub mod prelude {
     pub use crate::core::public::dsl::packages_phase::PackagesPhase;
     pub use crate::core::public::dsl::projects_phase::ProjectsPhase;
 }
+
+pub use node::*;

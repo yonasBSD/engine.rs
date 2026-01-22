@@ -1,3 +1,16 @@
+the refactored DSL macro that emits spans
+
+a full end‑to‑end example showing Ariadne highlighting a DSL error
+
+a diagnostic enum that uses these spans
+
+a snapshot test harness for diagnostics
+
+real DSL spans into your diagnostics
+
+real source snippets into Ariadne
+
+snapshot tests for diagnostics
 
 integrate this with your global EngineError type
 

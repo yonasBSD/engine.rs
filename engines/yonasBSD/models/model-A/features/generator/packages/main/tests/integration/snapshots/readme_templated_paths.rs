@@ -11,22 +11,23 @@ fn snapshot_readme_templated_paths() -> miette::Result<()> {
     let h = ScaffolderTestHarness::new();
 
     let cfg = ProjectsPhase::new()
-        .add_project("demo")
+        .project("demo")
         .next()
-        .enable_feature("alpha")
+        .feature("alpha")
         .next()
-        .include_package("api")
-        .include_package("lib")
+        .package("api")
+        .package("lib")
         .next()
-        .add_readme("readme/example.md.tpl", "engines/{{ project }}")
-        .add_readme(
+        .readme("readme/example.md.tpl", "engines/{{ project }}")
+        .readme(
             "readme/api.md.tpl",
             "engines/{{ project }}/models/{{ model }}/features/{{ feature }}/packages/api",
         )
-        .add_readme(
+        .readme(
             "readme/lib.md.tpl",
             "engines/{{ project }}/models/{{ model }}/features/{{ feature }}/packages/lib",
         )
+        .finish()
         .build();
 
     h.write_config(&cfg);

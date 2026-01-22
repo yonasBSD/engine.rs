@@ -13,11 +13,11 @@ macro_rules! config {
         packages { $($pkg:expr),* $(,)? }
     ) => {{
         let builder = ProjectsPhase::new()
-            $(.add_project($proj))*
+            $(.project($proj))*
             .next()
-            $(.enable_feature($feat))*
+            $(.feature($feat))*
             .next()
-            $(.include_package($pkg))*
+            $(.package($pkg))*
             .next();
 
         builder.build()
@@ -40,4 +40,9 @@ pub fn config_example() -> Config {
         features { "logging", "tracing" }
         packages { "engine-rs", "engine-rs-lib" }
     }
+}
+
+pub struct DslNode<T> {
+    pub value: T,
+    pub span: miette::SourceSpan,
 }

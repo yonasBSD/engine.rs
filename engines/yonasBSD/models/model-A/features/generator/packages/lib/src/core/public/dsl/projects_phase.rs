@@ -1,18 +1,19 @@
-use crate::ReadmeConfig;
-use crate::core::public::dsl::insert_custom_module;
-use crate::enums::DirSpec;
+use miette::SourceSpan;
 use std::collections::HashMap;
 
 use super::features_phase::FeaturesPhase;
+use crate::ReadmeConfig;
+use crate::core::public::dsl::{DslNode, insert_custom_module, default_span};
+use crate::enums::DirSpec;
 
 #[derive(Debug)]
 pub struct ProjectsPhase {
-    pub projects: Vec<String>,
-    pub features: Vec<String>,
-    pub packages: Vec<String>,
-    pub readmes: Vec<ReadmeConfig>,
+    pub projects: Vec<DslNode<String>>,
+    pub features: Vec<DslNode<String>>,
+    pub packages: Vec<DslNode<String>>,
+    pub readmes: Vec<DslNode<ReadmeConfig>>,
     pub custom_modules: HashMap<String, DirSpec>,
-    pub extra_folders: Vec<String>,
+    pub extra_folders: Vec<DslNode<String>>,
 }
 
 impl Default for ProjectsPhase {
@@ -34,17 +35,44 @@ impl ProjectsPhase {
         }
     }
 
-    pub fn add_project(mut self, name: impl Into<String>) -> Self {
-        self.projects.push(name.into());
+    pub fn add_project(mut self, name: impl Into<String>, span: SourceSpan) -> Self {
+        self.projects.push(DslNode::new(name.into(), span));
         self
     }
 
-    pub fn add_readme(mut self, file: impl Into<String>, path: impl Into<String>) -> Self {
-        self.readmes.push(ReadmeConfig {
+    // Convenience method for tests
+    pub fn project(self, name: impl Into<String>) -> Self {
+        self.add_project(name, default_span())
+    }
+
+    pub fn add_feature(mut self, name: impl Into<String>, span: SourceSpan) -> Self {
+        self.features.push(DslNode::new(name.into(), span));
+        self
+    }
+
+    pub fn feature(self, name: impl Into<String>) -> Self {
+        self.add_feature(name, default_span())
+    }
+
+    pub fn add_package(mut self, name: impl Into<String>, span: SourceSpan) -> Self {
+        self.packages.push(DslNode::new(name.into(), span));
+        self
+    }
+
+    pub fn package(self, name: impl Into<String>) -> Self {
+        self.add_package(name, default_span())
+    }
+
+    pub fn add_readme(mut self, file: impl Into<String>, path: impl Into<String>, span: SourceSpan) -> Self {
+        self.readmes.push(DslNode::new(ReadmeConfig {
             file: file.into(),
             path: path.into(),
-        });
+        }, span));
         self
+    }
+
+    pub fn readme(self, file: impl Into<String>, path: impl Into<String>) -> Self {
+        self.add_readme(file, path, default_span())
     }
 
     /// Add a custom module using a dotted path and a list of backends.
@@ -55,8 +83,8 @@ impl ProjectsPhase {
         self
     }
 
-    pub fn add_extra_folder(mut self, folder: impl Into<String>) -> Self {
-        self.extra_folders.push(folder.into());
+    pub fn add_extra_folder(mut self, folder: impl Into<String>, span: SourceSpan) -> Self {
+        self.extra_folders.push(DslNode::new(folder.into(), span));
         self
     }
 
