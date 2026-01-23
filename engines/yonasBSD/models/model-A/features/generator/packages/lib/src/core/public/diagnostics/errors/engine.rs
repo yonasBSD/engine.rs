@@ -7,8 +7,18 @@ pub struct FullSource(pub String);
 
 #[derive(Debug, Error, Diagnostic)]
 pub enum EngineError {
+    /// Invalid custom module path.
+    ///
+    /// This error occurs when a custom module path contains one or more empty segments.
+    /// Empty segments appear when two dots occur consecutively, like `api..core`.
+    ///
+    /// # Example
+    ///
+    /// ```text
+    /// api..core
+    /// ```
     #[error("Invalid custom module path: `{path}`")]
-    #[diagnostic(code("E0001"))]
+    #[diagnostic(code = "E0001")]
     InvalidPath {
         #[allow(unused)]
         path: String,

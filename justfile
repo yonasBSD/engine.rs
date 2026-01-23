@@ -33,6 +33,9 @@ engine-clean:
 engine-gen:
     cargo run --release
 
+engine-gen-index:
+  cargo run -p xtask -- gen-error-index
+
 build:
   comtrya -d setup -v apply
   pipelight trigger --flag pre-commit --attach

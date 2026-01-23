@@ -4,14 +4,12 @@ use std::io;
 use crate::utils::Assets;
 
 pub fn cmd_explain(code: String) -> io::Result<()> {
-    let file = Assets::get("error-index.md")
-        .unwrap_or_else(|| {
-            eprintln!("Embedded error-index.md not found.");
-            std::process::exit(1);
-        });
+    let file = Assets::get("error-index.md").unwrap_or_else(|| {
+        eprintln!("Embedded error-index.md not found.");
+        std::process::exit(1);
+    });
 
-    let index = std::str::from_utf8(file.data.as_ref())
-        .expect("error-index.md is not valid UTF-8");
+    let index = std::str::from_utf8(file.data.as_ref()).expect("error-index.md is not valid UTF-8");
 
     match extract_section(index, &code) {
         Some(section) => print_colored_explanation(&section),
