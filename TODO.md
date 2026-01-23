@@ -1,3 +1,16 @@
+engine.rs
+A zero‑clone version using Arc<str>
+
+A span‑aware parser that returns multiple labels
+
+A multi‑error diagnostic for multiple empty segments
+
+A builder‑style API for constructing diagnostics
+
+A git diff patch you can apply directly
+
+
+
 the refactored DSL macro that emits spans
 
 a full end‑to‑end example showing Ariadne highlighting a DSL error
