@@ -56,6 +56,9 @@ format:
 audit:
   task audit
 
+deny:
+  task audit:deny:errors
+
 coverage:
   task audit:code-coverage
 

@@ -401,6 +401,16 @@ tasks:
       - task: run:cargo-deny
       - task: run:cargo-license
 
+  audit:deny:errors:
+    desc: Audit deny (only show errors)
+    cmds:
+      - task: run:cargo-deny:errors
+
+  run:cargo-deny:errors:
+    desc: Run cargo deny (only show errors)
+    cmds:
+      - cargo deny --log-level error check
+
   run:feluda:
     desc: Run feluda
     cmds:
@@ -409,6 +419,7 @@ tasks:
   run:cargo-deny:
     desc: Run cargo deny
     cmds:
+      - cargo deny --log-level error check licenses bans
       - cargo deny check licenses bans
 
   run:cargo-license:
