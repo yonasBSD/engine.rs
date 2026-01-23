@@ -23,7 +23,6 @@ impl ReportHandler for AriadneHandler {
         error: &(dyn std::error::Error + 'static),
         f: &mut fmt::Formatter<'_>,
     ) -> fmt::Result {
-        // Downcast from the *error*, not the diagnostic
         if let Some(engine) = error.downcast_ref::<EngineError>() {
             return self.render_from_engine(engine, f);
         }
@@ -37,24 +36,55 @@ impl ReportHandler for AriadneHandler {
 }
 
 impl AriadneHandler {
-    fn render_from_engine(&self, engine: &EngineError, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn render_from_engine(
+        &self,
+        engine: &EngineError,
+        f: &mut fmt::Formatter<'_>,
+    ) -> fmt::Result {
         let file_id = "engine";
         let msg = engine.to_string();
 
-        let mut builder = Report::build(ReportKind::Error, (file_id, 0..0)).with_message(msg);
+        let mut builder =
+            Report::build(ReportKind::Error, (file_id, 0..0)).with_message(msg);
 
-        if let EngineError::InvalidPath { span, .. } = engine {
-            let start = span.offset();
-            let end = start + span.len();
+        match engine {
+            EngineError::InvalidPath { spans, suggestion, .. } => {
+                let mut spans = spans.clone();
+                spans.sort_by_key(|s| s.offset());
 
-            builder = builder.with_label(
-                Label::new((file_id, start..end))
-                    .with_message("empty segment here")
-                    .with_color(Color::Red),
-            );
+                for (i, span) in spans.iter().enumerate() {
+                    let start = span.offset();
+                    let end = start + span.len();
+
+                    builder = builder.with_label(
+                        Label::new((file_id, start..end))
+                            .with_message("empty segment here")
+                            .with_color(Color::Red)
+                            .with_order(i as i32),
+                    );
+                }
+
+                builder = builder.with_note(
+                    "empty segments occur when two dots appear consecutively",
+                );
+
+                builder = builder.with_note(
+                    "module paths must not contain empty identifiers",
+                );
+
+                if let Some(s) = suggestion {
+                    builder = builder.with_help(format!("did you mean `{}`?", s));
+                }
+
+                builder = builder.with_help("try removing extra dots");
+
+                builder = builder.with_note("error code: engine.invalid_path.empty_segment");
+                builder = builder.with_help(
+                    "for more information, visit https://engine.rs/errors/E0001",
+                );
+            }
         }
 
-        // Full source comes from your FullSource wrapper
         let full = match engine {
             EngineError::InvalidPath { full, .. } => full.0.as_str(),
             _ => "<no source>",
@@ -70,7 +100,11 @@ impl AriadneHandler {
         write!(f, "{}", String::from_utf8_lossy(&out))
     }
 
-    fn render_from_diag(&self, diag: &dyn Diagnostic, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn render_from_diag(
+        &self,
+        diag: &dyn Diagnostic,
+        f: &mut fmt::Formatter<'_>,
+    ) -> fmt::Result {
         let file_id = "engine";
         let mut builder =
             Report::build(ReportKind::Error, (file_id, 0..0)).with_message(diag.to_string());

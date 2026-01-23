@@ -14,7 +14,7 @@ fn main() {
             .next()
             .feature("alpha")
             .next()
-            .add_custom_module("api..core", &["graphql"])? // <-- now errors
+            .add_custom_module("api..core..a..b..c", &["graphql"])? // <-- now errors
             .finish()
             .build();
         Ok(())
