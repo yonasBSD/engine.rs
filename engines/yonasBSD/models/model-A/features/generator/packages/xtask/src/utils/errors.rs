@@ -7,6 +7,11 @@ use thiserror::Error;
 // ────────────────────────────────────────────────────────────────
 //
 
+/// Diagnostic emitted when an `EngineError` variant is missing documentation.
+///
+/// This error is raised during error extraction when a variant has a
+/// `#[diagnostic(code = "...")]` attribute but no associated `///` doc
+/// comments. It points directly at the offending variant.
 #[derive(Debug, Error, Diagnostic)]
 #[error("Missing documentation for `{name}`")]
 #[diagnostic(
@@ -14,12 +19,17 @@ use thiserror::Error;
     help("Add a `///` doc comment describing what this error represents")
 )]
 pub struct MissingDocsError {
+    /// The error code associated with the undocumented variant.
     pub code: String,
+
+    /// The name of the undocumented enum variant.
     pub name: String,
 
+    /// The full source file containing the variant.
     #[source_code]
     pub src: NamedSource<String>,
 
+    /// Span pointing at the undocumented variant identifier.
     #[label("this error variant has no documentation")]
     pub span: SourceSpan,
 }
@@ -30,6 +40,10 @@ pub struct MissingDocsError {
 // ────────────────────────────────────────────────────────────────
 //
 
+/// Diagnostic emitted when a target crate cannot be found in the workspace.
+///
+/// This typically indicates a mismatch between the expected crate name and
+/// the actual workspace configuration.
 #[derive(Debug, Error, Diagnostic)]
 #[error("Crate `{crate_name}` was not found in the workspace")]
 #[diagnostic(
@@ -37,6 +51,7 @@ pub struct MissingDocsError {
     help("Ensure the crate exists and is included in the workspace members list")
 )]
 pub struct CrateNotFoundError {
+    /// The crate name that was requested but not found.
     pub crate_name: String,
 }
 
@@ -46,6 +61,10 @@ pub struct CrateNotFoundError {
 // ────────────────────────────────────────────────────────────────
 //
 
+/// Diagnostic emitted when an error code does not match the expected format.
+///
+/// Valid codes follow the pattern `E0001`, `E0002`, … with a leading `E`
+/// and four ASCII digits.
 #[derive(Debug, Error, Diagnostic)]
 #[error("Invalid error code format: `{code}`")]
 #[diagnostic(
@@ -53,6 +72,7 @@ pub struct CrateNotFoundError {
     help("Use the format `E0001`, `E0002`, …")
 )]
 pub struct InvalidCodeFormatError {
+    /// The invalid code string that was provided.
     pub code: String,
 }
 
@@ -62,6 +82,9 @@ pub struct InvalidCodeFormatError {
 // ────────────────────────────────────────────────────────────────
 //
 
+/// Diagnostic emitted when attempting to scaffold a sidecar that already exists.
+///
+/// This prevents accidental overwrites of manually curated documentation.
 #[derive(Debug, Error, Diagnostic)]
 #[error("Sidecar file already exists at `{path}`")]
 #[diagnostic(
@@ -69,6 +92,7 @@ pub struct InvalidCodeFormatError {
     help("Remove the existing file or choose a different error code")
 )]
 pub struct SidecarExistsError {
+    /// The path to the existing sidecar file.
     pub path: String,
 }
 
@@ -78,6 +102,9 @@ pub struct SidecarExistsError {
 // ────────────────────────────────────────────────────────────────
 //
 
+/// Diagnostic emitted when an error code is already present in `EngineError`.
+///
+/// This ensures that each error code remains globally unique.
 #[derive(Debug, Error, Diagnostic)]
 #[error("Error code `{code}` already exists in `EngineError`")]
 #[diagnostic(
@@ -85,6 +112,7 @@ pub struct SidecarExistsError {
     help("Choose a new unique error code")
 )]
 pub struct CodeAlreadyExistsError {
+    /// The duplicate error code.
     pub code: String,
 }
 
@@ -94,6 +122,10 @@ pub struct CodeAlreadyExistsError {
 // ────────────────────────────────────────────────────────────────
 //
 
+/// Diagnostic emitted when the `EngineError` enum cannot be located.
+///
+/// This typically indicates that the expected file layout or enum name has
+/// changed without updating the xtask tooling.
 #[derive(Debug, Error, Diagnostic)]
 #[error("Could not find the `EngineError` enum in the source file")]
 #[diagnostic(
@@ -108,6 +140,10 @@ pub struct EngineEnumNotFoundError;
 // ────────────────────────────────────────────────────────────────
 //
 
+/// Diagnostic emitted when the same error code appears more than once.
+///
+/// This is detected during validation by tracking all discovered codes and
+/// reporting the first duplicate pair.
 #[derive(Debug, Error, Diagnostic)]
 #[error("Duplicate error code `{code}` found")]
 #[diagnostic(
@@ -115,8 +151,13 @@ pub struct EngineEnumNotFoundError;
     help("Ensure each error code is defined only once")
 )]
 pub struct DuplicateCodeError {
+    /// The duplicated error code.
     pub code: String,
+
+    /// Path to the first file where the code was found.
     pub file1: String,
+
+    /// Path to the second file where the code was found.
     pub file2: String,
 }
 
@@ -126,6 +167,10 @@ pub struct DuplicateCodeError {
 // ────────────────────────────────────────────────────────────────
 //
 
+/// Diagnostic emitted when an error code has no corresponding sidecar file.
+///
+/// This enforces the convention that every error has extended documentation
+/// stored alongside the library in Markdown form.
 #[derive(Debug, Error, Diagnostic)]
 #[error("Missing sidecar file for error code `{code}`")]
 #[diagnostic(
@@ -133,7 +178,10 @@ pub struct DuplicateCodeError {
     help("Create the sidecar file at the expected path")
 )]
 pub struct MissingSidecarError {
+    /// The error code missing a sidecar.
     pub code: String,
+
+    /// The path where the sidecar was expected to exist.
     pub expected: String,
 }
 
@@ -143,6 +191,10 @@ pub struct MissingSidecarError {
 // ────────────────────────────────────────────────────────────────
 //
 
+/// Diagnostic emitted when error codes are not strictly sequential.
+///
+/// This enforces a dense sequence (`E0001`, `E0002`, …) with no gaps, which
+/// simplifies navigation and keeps the error index predictable.
 #[derive(Debug, Error, Diagnostic)]
 #[error("Error codes are not sequential")]
 #[diagnostic(
@@ -150,7 +202,10 @@ pub struct MissingSidecarError {
     help("Ensure codes follow the sequence E0001, E0002, … with no gaps")
 )]
 pub struct NonSequentialCodeError {
+    /// The code that was expected at a given position.
     pub expected: String,
+
+    /// The code that was actually found.
     pub found: String,
 }
 
@@ -160,6 +215,10 @@ pub struct NonSequentialCodeError {
 // ────────────────────────────────────────────────────────────────
 //
 
+/// Diagnostic emitted when enum variant order does not match numeric code order.
+///
+/// This ensures that the `EngineError` enum remains ordered by code, which
+/// improves readability and keeps diffs stable as new errors are added.
 #[derive(Debug, Error, Diagnostic)]
 #[error("Error variant order does not match numeric code order")]
 #[diagnostic(
@@ -167,7 +226,12 @@ pub struct NonSequentialCodeError {
     help("Reorder the variants in `EngineError` to match the sorted code order")
 )]
 pub struct EnumOrderError {
+    /// The code that should appear at this position.
     pub expected: String,
+
+    /// The code that actually appears at this position.
     pub found: String,
+
+    /// The file containing the mismatched enum.
     pub file: String,
 }
