@@ -34,7 +34,7 @@ engine-gen:
     cargo run --release
 
 engine-gen-index:
-  cargo run -p xtask -- gen-error-index
+  cargo run -p xtask -- generate
 
 build:
   comtrya -d setup -v apply
