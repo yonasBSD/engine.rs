@@ -1,4 +1,4 @@
-use crate::enums::DirSpec;
+use crate::{EngineError, enums::DirSpec};
 use std::collections::HashMap;
 
 /// Insert a custom module specification into the `custom_modules` map,
@@ -11,16 +11,20 @@ pub fn insert_custom_module(
     custom_modules: &mut HashMap<String, DirSpec>,
     path: &str,
     backends: &[&str],
-) {
+) -> Result<(), EngineError> {
     let parts: Vec<&str> = path.split('.').collect();
-    if parts.is_empty() {
-        return;
+
+    // Reject empty segments
+    if parts.iter().any(|p| p.trim().is_empty()) {
+        //panic!("Invalid custom module path `{}`: empty segment", path);
+        return Err(EngineError::invalid_path(path));
     }
 
     let (root, rest) = parts.split_first().unwrap();
     let spec = build_spec(rest, backends);
 
     custom_modules.insert((*root).to_string(), spec);
+    Ok(())
 }
 
 fn build_spec(segments: &[&str], backends: &[&str]) -> DirSpec {

@@ -1,6 +1,7 @@
 mod custom_modules;
 pub mod features_phase;
 pub mod final_phase;
+pub mod macros;
 pub mod node;
 pub mod packages_phase;
 pub mod projects_phase;

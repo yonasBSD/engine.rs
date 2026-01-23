@@ -1,7 +1,8 @@
 use ariadne::{Color, Label, Report, ReportKind, Source};
-use miette::{Diagnostic, LabeledSpan, ReportHandler};
+use miette::{Diagnostic, ReportHandler};
 use std::fmt;
 
+use crate::EngineError;
 use crate::wrapped::WrappedDiagnostic;
 
 pub fn install_ariadne_hook() {
@@ -10,11 +11,11 @@ pub fn install_ariadne_hook() {
 }
 
 #[derive(Debug)]
-struct AriadneHandler;
+pub struct AriadneHandler;
 
 impl ReportHandler for AriadneHandler {
     fn debug(&self, diagnostic: &dyn Diagnostic, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.render(diagnostic, f)
+        self.render_from_diag(diagnostic, f)
     }
 
     fn display(
@@ -22,67 +23,92 @@ impl ReportHandler for AriadneHandler {
         error: &(dyn std::error::Error + 'static),
         f: &mut fmt::Formatter<'_>,
     ) -> fmt::Result {
-        // FIX 1: Use the specialized miette::Diagnostic trait check
-        // instead of error.downcast_ref::<dyn Diagnostic>()
-        if let Some(diag) = error.as_diagnostic() {
-            self.render(diag, f)
-        } else {
-            write!(f, "{}", error)
+        // Downcast from the *error*, not the diagnostic
+        if let Some(engine) = error.downcast_ref::<EngineError>() {
+            return self.render_from_engine(engine, f);
         }
+
+        if let Some(wrapped) = error.downcast_ref::<WrappedDiagnostic>() {
+            return self.render_from_diag(&*wrapped.0, f);
+        }
+
+        write!(f, "{}", error)
     }
 }
 
 impl AriadneHandler {
-    fn render(&self, diag: &dyn Diagnostic, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn render_from_engine(&self, engine: &EngineError, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let file_id = "engine";
+        let msg = engine.to_string();
 
-        // FIX 2: ariadne::Report::build takes TWO arguments.
-        // The second argument must be a Span. A tuple (Id, Range) implements Span.
+        let mut builder = Report::build(ReportKind::Error, (file_id, 0..0)).with_message(msg);
+
+        if let EngineError::InvalidPath { span, .. } = engine {
+            let start = span.offset();
+            let end = start + span.len();
+
+            builder = builder.with_label(
+                Label::new((file_id, start..end))
+                    .with_message("empty segment here")
+                    .with_color(Color::Red),
+            );
+        }
+
+        // Full source comes from your FullSource wrapper
+        let full = match engine {
+            EngineError::InvalidPath { full, .. } => full.0.as_str(),
+            _ => "<no source>",
+        };
+
+        let mut out = Vec::new();
+
+        builder
+            .finish()
+            .write((file_id, Source::from(full)), &mut out)
+            .map_err(|_| fmt::Error)?;
+
+        write!(f, "{}", String::from_utf8_lossy(&out))
+    }
+
+    fn render_from_diag(&self, diag: &dyn Diagnostic, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let file_id = "engine";
         let mut builder =
             Report::build(ReportKind::Error, (file_id, 0..0)).with_message(diag.to_string());
 
-        if let Some(labels) = diag.labels() {
-            for label in labels {
-                let start = label.offset();
-                let end = start + label.len();
-                builder = builder.with_label(
-                    Label::new((file_id, start..end))
-                        .with_message(label.label().unwrap_or("here"))
-                        .with_color(Color::Red),
-                );
-            }
+        let labels: Vec<_> = diag.labels().map(|l| l.collect()).unwrap_or_default();
+
+        for label in &labels {
+            let start = label.offset();
+            let end = start + label.len();
+
+            builder = builder.with_label(
+                Label::new((file_id, start..end))
+                    .with_message(label.label().unwrap_or("here"))
+                    .with_color(Color::Red),
+            );
         }
 
         if let Some(src) = diag.source_code() {
-            let span = LabeledSpan::new_with_span(None, (0, 0));
+            if let Some(label) = labels.first() {
+                let start = label.offset();
+                let len = label.len();
+                let span = miette::SourceSpan::new(start.into(), len.into());
 
-            if let Ok(contents) = src.read_span(span.inner(), 0, 0) {
-                let mut out = Vec::new();
-                let source_str = String::from_utf8_lossy(contents.data());
+                if let Ok(contents) = src.read_span(&span, 0, 0) {
+                    let text = std::str::from_utf8(contents.data()).unwrap_or("<invalid utf8>");
 
-                builder
-                    .finish()
-                    .write((file_id, Source::from(source_str.as_ref())), &mut out)
-                    .map_err(|_| fmt::Error)?;
+                    let mut out = Vec::new();
 
-                return write!(f, "{}", String::from_utf8_lossy(&out));
+                    builder
+                        .finish()
+                        .write((file_id, Source::from(text)), &mut out)
+                        .map_err(|_| fmt::Error)?;
+
+                    return write!(f, "{}", String::from_utf8_lossy(&out));
+                }
             }
         }
 
         write!(f, "{}", diag)
-    }
-}
-
-// Helper trait to solve the E0277 downcast issue
-trait AsDiagnostic {
-    fn as_diagnostic(&self) -> Option<&dyn Diagnostic>;
-}
-
-impl AsDiagnostic for dyn std::error::Error + 'static {
-    fn as_diagnostic(&self) -> Option<&dyn Diagnostic> {
-        if let Some(wrapped) = self.downcast_ref::<WrappedDiagnostic>() {
-            return Some(&*wrapped.0);
-        }
-        None
     }
 }
