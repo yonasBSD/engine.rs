@@ -42,7 +42,8 @@ impl AriadneHandler {
         f: &mut fmt::Formatter<'_>,
     ) -> fmt::Result {
         let file_id = "engine";
-        let msg = engine.to_string();
+        let code = engine.code();
+        let msg = format!("error[{code}]: {engine}");
 
         let mut builder =
             Report::build(ReportKind::Error, (file_id, 0..0)).with_message(msg);
@@ -78,10 +79,9 @@ impl AriadneHandler {
 
                 builder = builder.with_help("try removing extra dots");
 
-                builder = builder.with_note("error code: engine.invalid_path.empty_segment");
-                builder = builder.with_help(
-                    "for more information, visit https://engine.rs/errors/E0001",
-                );
+                builder = builder.with_help(format!(
+                    "for more information about this error, run: engine --explain {code}",
+                ));
             }
         }
 

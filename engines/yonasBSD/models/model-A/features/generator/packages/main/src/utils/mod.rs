@@ -2,6 +2,9 @@
 // COMMAND IMPLEMENTATIONS
 //
 
+mod assets;
+pub use assets::*;
+
 use engine_rs_lib::core::{Config, ConfigError};
 
 use cliclack::{

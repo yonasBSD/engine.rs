@@ -38,4 +38,10 @@ pub enum Commands {
 
     /// Generate a default config.toml
     Init,
+
+    /// Explain an engine.rs error code (e.g. E0001)
+    Explain {
+        /// The error code to explain (e.g. E0001)
+        code: String,
+    },
 }
