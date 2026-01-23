@@ -3,16 +3,16 @@
 //
 
 mod enums;
+mod explain;
 mod init;
 mod run;
 mod validate;
-mod explain;
 
 pub use enums::*;
+pub use explain::*;
 pub use init::*;
 pub use run::*;
 pub use validate::*;
-pub use explain::*;
 
 use clap::Parser;
 

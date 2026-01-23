@@ -1,3 +1,7 @@
+extend the generator to include ScaffolderError too
+
+enforce that every error has an E‑code
+
 engine.rs
 A zero‑clone version using Arc<str>
 

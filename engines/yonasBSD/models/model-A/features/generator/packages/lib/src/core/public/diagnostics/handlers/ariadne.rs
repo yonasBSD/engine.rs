@@ -36,20 +36,17 @@ impl ReportHandler for AriadneHandler {
 }
 
 impl AriadneHandler {
-    fn render_from_engine(
-        &self,
-        engine: &EngineError,
-        f: &mut fmt::Formatter<'_>,
-    ) -> fmt::Result {
+    fn render_from_engine(&self, engine: &EngineError, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let file_id = "engine";
         let code = engine.code();
         let msg = format!("error[{code}]: {engine}");
 
-        let mut builder =
-            Report::build(ReportKind::Error, (file_id, 0..0)).with_message(msg);
+        let mut builder = Report::build(ReportKind::Error, (file_id, 0..0)).with_message(msg);
 
         match engine {
-            EngineError::InvalidPath { spans, suggestion, .. } => {
+            EngineError::InvalidPath {
+                spans, suggestion, ..
+            } => {
                 let mut spans = spans.clone();
                 spans.sort_by_key(|s| s.offset());
 
@@ -65,13 +62,10 @@ impl AriadneHandler {
                     );
                 }
 
-                builder = builder.with_note(
-                    "empty segments occur when two dots appear consecutively",
-                );
+                builder =
+                    builder.with_note("empty segments occur when two dots appear consecutively");
 
-                builder = builder.with_note(
-                    "module paths must not contain empty identifiers",
-                );
+                builder = builder.with_note("module paths must not contain empty identifiers");
 
                 if let Some(s) = suggestion {
                     builder = builder.with_help(format!("did you mean `{}`?", s));
@@ -100,11 +94,7 @@ impl AriadneHandler {
         write!(f, "{}", String::from_utf8_lossy(&out))
     }
 
-    fn render_from_diag(
-        &self,
-        diag: &dyn Diagnostic,
-        f: &mut fmt::Formatter<'_>,
-    ) -> fmt::Result {
+    fn render_from_diag(&self, diag: &dyn Diagnostic, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let file_id = "engine";
         let mut builder =
             Report::build(ReportKind::Error, (file_id, 0..0)).with_message(diag.to_string());
