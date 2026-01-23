@@ -1,6 +1,6 @@
-use crate::ReadmeConfig;
-use crate::core::public::dsl::{DslNode, insert_custom_module, default_span};
+use crate::core::public::dsl::{DslNode, default_span, insert_custom_module};
 use crate::enums::DirSpec;
+use crate::{EngineError, ReadmeConfig};
 use miette::SourceSpan;
 use std::collections::HashMap;
 
@@ -44,11 +44,19 @@ impl FeaturesPhase {
         self.add_package(name, default_span())
     }
 
-    pub fn add_readme(mut self, file: impl Into<String>, path: impl Into<String>, span: SourceSpan) -> Self {
-        self.readmes.push(DslNode::new(ReadmeConfig {
-            file: file.into(),
-            path: path.into(),
-        }, span));
+    pub fn add_readme(
+        mut self,
+        file: impl Into<String>,
+        path: impl Into<String>,
+        span: SourceSpan,
+    ) -> Self {
+        self.readmes.push(DslNode::new(
+            ReadmeConfig {
+                file: file.into(),
+                path: path.into(),
+            },
+            span,
+        ));
         self
     }
 
@@ -59,9 +67,13 @@ impl FeaturesPhase {
     /// Add a custom module using a dotted path and a list of backends.
     ///
     /// Example: `"api.core"`, &["graphql", "grpc", "rest"]
-    pub fn add_custom_module(mut self, path: impl AsRef<str>, backends: &[&str]) -> Self {
-        insert_custom_module(&mut self.custom_modules, path.as_ref(), backends);
-        self
+    pub fn add_custom_module(
+        mut self,
+        path: impl AsRef<str>,
+        backends: &[&str],
+    ) -> Result<Self, EngineError> {
+        insert_custom_module(&mut self.custom_modules, path.as_ref(), backends)?;
+        Ok(self)
     }
 
     pub fn add_extra_folder(mut self, folder: impl Into<String>, span: SourceSpan) -> Self {

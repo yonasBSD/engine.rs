@@ -18,6 +18,7 @@ ariadne = { version = "0.6.0", features = ["auto-color"] }
 thiserror = "2.0.18"
 
 [dev-dependencies]
+color-backtrace = "0.7.2"
 tempfile = "3.24"
 
 [features]
