@@ -8,7 +8,7 @@ pub struct FullSource(pub String);
 #[derive(Debug, Error, Diagnostic)]
 pub enum EngineError {
     #[error("Invalid custom module path: `{path}`")]
-    #[diagnostic(code("engine.invalid_path.empty_segment"))]
+    #[diagnostic(code("E0001"))]
     InvalidPath {
         #[allow(unused)]
         path: String,
@@ -44,6 +44,12 @@ impl EngineError {
             suggestion,
         }
     }
+
+    pub fn code(&self) -> &'static str {
+        match self {
+            EngineError::InvalidPath { .. } => "E0001",
+        }
+    }
 }
 
 fn find_empty_segments(path: &str) -> Vec<SourceSpan> {
@@ -55,7 +61,8 @@ fn find_empty_segments(path: &str) -> Vec<SourceSpan> {
         let (_, c2) = window[1];
 
         if c1 == '.' && c2 == '.' {
-            spans.push(SourceSpan::new(idx.into(), 1usize.into()));
+            // zero-length span → rustc-style pointing label
+            spans.push(SourceSpan::new(idx.into(), 0usize.into()));
         }
     }
 
