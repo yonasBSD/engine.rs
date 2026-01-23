@@ -18,16 +18,17 @@ fn main() {
         .expect("failed to run rustdoc");
 
     if !output.status.success() {
-        eprintln!("rustdoc failed:\n{}", String::from_utf8_lossy(&output.stderr));
+        eprintln!(
+            "rustdoc failed:\n{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
         std::process::exit(1);
     }
 
     let json_path = Path::new("target/doc/engine_rs_lib.json");
-    let json = fs::read_to_string(json_path)
-        .expect("failed to read rustdoc JSON output");
+    let json = fs::read_to_string(json_path).expect("failed to read rustdoc JSON output");
 
-    let data: serde_json::Value =
-        serde_json::from_str(&json).expect("invalid rustdoc JSON");
+    let data: serde_json::Value = serde_json::from_str(&json).expect("invalid rustdoc JSON");
 
     let mut index = String::new();
     index.push_str("# Engine.rs Error Index\n\n");
@@ -49,6 +50,5 @@ fn main() {
         }
     }
 
-    fs::write("error-index.md", index)
-        .expect("failed to write error-index.md");
+    fs::write("error-index.md", index).expect("failed to write error-index.md");
 }

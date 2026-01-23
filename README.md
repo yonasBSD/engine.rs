@@ -1,5 +1,7 @@
 # engine.rs
 
+![engine.rs logo](assets/logo.png)
+
 ![Licenses](https://github.com/yonasBSD/engine.rs/actions/workflows/licenses.yaml/badge.svg)
 ![Linting](https://github.com/yonasBSD/engine.rs/actions/workflows/lint.yaml/badge.svg)
 ![Testing](https://github.com/yonasBSD/engine.rs/actions/workflows/test-with-coverage.yaml/badge.svg)
