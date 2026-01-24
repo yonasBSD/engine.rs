@@ -1,5 +1,6 @@
-use console::style;
 use std::io;
+
+use console::style;
 
 use crate::utils::Assets;
 
@@ -16,7 +17,7 @@ pub fn cmd_explain(code: String) -> io::Result<()> {
         None => {
             eprintln!("No explanation found for error code {code}");
             std::process::exit(1);
-        }
+        },
     }
 
     Ok(())

@@ -1,9 +1,11 @@
-use console::style;
-use std::io::{self, Write};
-use std::path::Path;
-use std::thread;
-use std::time::Duration;
+use std::{
+    io::{self, Write},
+    path::Path,
+    thread,
+    time::Duration,
+};
 
+use console::style;
 use engine_rs_lib::traits::FileSystem;
 
 // ==========================================================

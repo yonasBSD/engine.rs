@@ -1,4 +1,5 @@
 use std::path::Path;
+
 use tempfile::{TempDir, tempdir};
 
 /// Core harness struct. Extensions live in `extensions.rs`.

@@ -1,6 +1,7 @@
-use crate::ScaffolderError;
 use miette::{Diagnostic, NamedSource, SourceSpan};
 use thiserror::Error;
+
+use crate::ScaffolderError;
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("{0}")]
@@ -10,8 +11,9 @@ pub struct FullSource(pub String);
 pub enum EngineError {
     /// Invalid custom module path.
     ///
-    /// This error occurs when a custom module path contains one or more empty segments.
-    /// Empty segments appear when two dots occur consecutively, like `api..core`.
+    /// This error occurs when a custom module path contains one or more empty
+    /// segments. Empty segments appear when two dots occur consecutively,
+    /// like `api..core`.
     ///
     /// # Example
     ///
@@ -40,7 +42,8 @@ pub enum EngineError {
         full: FullSource,
     },
 
-    /// Wraps any scaffolder-level diagnostic (DirectoryMissing, ReadmeMissing, etc.)
+    /// Wraps any scaffolder-level diagnostic (DirectoryMissing, ReadmeMissing,
+    /// etc.)
     #[error(transparent)]
     #[diagnostic(transparent)]
     Scaffolder(#[from] ScaffolderError),

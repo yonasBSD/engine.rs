@@ -12,7 +12,8 @@ pub fn normalize_path_str(p: &str) -> String {
         .to_string()
 }
 
-/// Normalize a Path into a canonicalized `PathBuf` without touching the filesystem.
+/// Normalize a Path into a canonicalized `PathBuf` without touching the
+/// filesystem.
 #[must_use]
 pub fn normalize_path(p: &Path) -> PathBuf {
     PathBuf::from(normalize_path_str(&p.to_string_lossy()))

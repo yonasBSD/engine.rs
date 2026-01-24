@@ -4,8 +4,7 @@ pub mod traits;
 pub mod utils;
 
 // Core internal exports
-pub use core::backends;
-pub use core::frontends;
+pub use core::{backends, frontends};
 
 //
 // LOOM TESTS

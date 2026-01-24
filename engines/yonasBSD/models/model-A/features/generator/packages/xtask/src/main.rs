@@ -1,9 +1,10 @@
 mod commands;
 mod utils;
 
-use crate::enums::*;
 use clap::Parser;
 use commands::*;
+
+use crate::enums::*;
 
 /// Process-wide entrypoint for the `xtask` binary.
 ///

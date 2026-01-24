@@ -1,10 +1,13 @@
-use crate::core::public::dsl::{DslNode, default_span, insert_custom_module};
-use crate::enums::DirSpec;
-use crate::{EngineError, ReadmeConfig};
-use miette::SourceSpan;
 use std::collections::HashMap;
 
+use miette::SourceSpan;
+
 use super::packages_phase::PackagesPhase;
+use crate::{
+    EngineError, ReadmeConfig,
+    core::public::dsl::{DslNode, default_span, insert_custom_module},
+    enums::DirSpec,
+};
 
 #[derive(Debug)]
 pub struct FeaturesPhase {

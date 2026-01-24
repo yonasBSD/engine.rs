@@ -1,5 +1,4 @@
-use crate::helpers::ScaffolderTestHarness;
-use crate::helpers::capture_tree;
+use crate::helpers::{ScaffolderTestHarness, capture_tree};
 
 /// DSL for asserting properties about the generated directory tree.
 pub trait TreeAssertionDsl {

@@ -3,11 +3,11 @@
 //!
 //! This test uses the harness to run the CLI in an isolated environment.
 
-use engine_rs_lib::core::Config;
 use std::fs;
 
-use crate::helpers::HarnessExtensions;
-use crate::helpers::ScaffolderTestHarness;
+use engine_rs_lib::core::Config;
+
+use crate::helpers::{HarnessExtensions, ScaffolderTestHarness};
 
 #[test]
 fn init_produces_valid_config() {

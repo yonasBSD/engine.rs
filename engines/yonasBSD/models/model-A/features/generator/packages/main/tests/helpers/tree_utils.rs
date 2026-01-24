@@ -1,4 +1,5 @@
 use std::path::Path;
+
 use walkdir::WalkDir;
 
 pub fn capture_tree(root: impl AsRef<Path>) -> String {

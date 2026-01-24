@@ -1,7 +1,6 @@
-use crate::utils::ui;
+use std::{fs, io};
 
-use std::fs;
-use std::io;
+use crate::utils::ui;
 
 //
 // INIT COMMAND

@@ -1,9 +1,11 @@
 //! Snapshot test: readme template resolution for simple, non-templated paths.
 //!
-//! This verifies that readme templates are rendered into the expected locations.
+//! This verifies that readme templates are rendered into the expected
+//! locations.
+
+use engine_rs_lib::core::public::dsl::prelude::*;
 
 use crate::helpers::*;
-use engine_rs_lib::core::public::dsl::prelude::*;
 
 #[test]
 fn snapshot_readme_template_resolution() -> miette::Result<()> {

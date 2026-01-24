@@ -1,8 +1,4 @@
-use crate::{
-    LoggingFS, is_quiet, load_config, print_explain_rules, print_json_integrity_errors,
-    print_json_ok, print_json_validation_errors,
-};
-use engine_rs_lib::{traits::RealFS, traits::Scaffolder};
+use std::{io, path::PathBuf};
 
 use cliclack::{
     intro,
@@ -10,8 +6,12 @@ use cliclack::{
     note, outro, progress_bar, spinner,
 };
 use console::style;
-use std::io;
-use std::path::PathBuf;
+use engine_rs_lib::traits::{RealFS, Scaffolder};
+
+use crate::{
+    LoggingFS, is_quiet, load_config, print_explain_rules, print_json_integrity_errors,
+    print_json_ok, print_json_validation_errors,
+};
 
 //
 // RUN COMMAND
@@ -91,7 +91,7 @@ pub fn cmd_run(explain: bool, quiet: bool, json: bool, debug: bool) -> io::Resul
 
                 let _ = outro(style(" Build Success ").black().on_green());
             }
-        }
+        },
         Err(errors) => {
             if json {
                 print_json_integrity_errors(&errors);
@@ -103,7 +103,7 @@ pub fn cmd_run(explain: bool, quiet: bool, json: bool, debug: bool) -> io::Resul
                 }
             }
             std::process::exit(1);
-        }
+        },
     }
 
     Ok(())

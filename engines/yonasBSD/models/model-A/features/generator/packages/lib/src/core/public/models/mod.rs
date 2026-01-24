@@ -4,9 +4,10 @@
 
 mod tests;
 
+use std::collections::HashMap;
+
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 use crate::{
     core::ConfigError,
@@ -44,7 +45,7 @@ impl std::fmt::Display for ConfigError {
                 field,
             } => {
                 write!(f, "The list '{field}' cannot be empty.")
-            }
+            },
             Self::DuplicateValues {
                 field,
                 duplicates,
@@ -53,7 +54,7 @@ impl std::fmt::Display for ConfigError {
                     f,
                     "The list '{field}' contains duplicate values: {duplicates:?}"
                 )
-            }
+            },
             Self::InvalidName {
                 field,
                 value,
@@ -62,7 +63,7 @@ impl std::fmt::Display for ConfigError {
                     f,
                     "Invalid name '{value}' in field '{field}'. Names must match ^[a-zA-Z0-9_-]+$"
                 )
-            }
+            },
         }
     }
 }

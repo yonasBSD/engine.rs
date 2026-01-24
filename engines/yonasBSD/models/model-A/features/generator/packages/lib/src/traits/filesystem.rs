@@ -1,6 +1,17 @@
 // ==========================================================
 // FILESYSTEM ABSTRACTION
 // ==========================================================
+use std::{
+    collections::HashMap,
+    fs,
+    io::{self, Write},
+    path::{Path, PathBuf},
+    time::{Duration, Instant},
+};
+
+use blake3;
+use minijinja::{Environment, context};
+
 use crate::{
     core::{
         Asset, Config, DEFAULT_README_TPL, EXTRA_TOP_LEVEL_DIRS, TPL_CARGO, TPL_MOD_EXPORT,
@@ -8,14 +19,6 @@ use crate::{
     },
     enums::DirSpec,
 };
-
-use blake3;
-use minijinja::{Environment, context};
-use std::collections::HashMap;
-use std::fs;
-use std::io::{self, Write};
-use std::path::{Path, PathBuf};
-use std::time::{Duration, Instant};
 
 pub trait FileSystem {
     fn create_dir_all(&self, path: &Path) -> io::Result<()>;
@@ -287,7 +290,7 @@ impl<F: FileSystem> Scaffolder<F> {
                     if self.calculate_hash(&content) != expected_hash {
                         errors.push(format!("Hash Mismatch: {path:?}"));
                     }
-                }
+                },
                 Err(_) => errors.push(format!("File Missing: {path:?}")),
             }
         }
@@ -311,14 +314,14 @@ impl<F: FileSystem> Scaffolder<F> {
                     let dir = base.join(item);
                     self.create_module_skeleton(manifest, &dir)?;
                 }
-            }
+            },
             DirSpec::Tree(map) => {
                 for (name, child) in map {
                     let dir = base.join(name);
                     self.create_module_skeleton(manifest, &dir)?;
                     self.generate_custom_tree(manifest, &dir, child)?;
                 }
-            }
+            },
         }
 
         Ok(())
