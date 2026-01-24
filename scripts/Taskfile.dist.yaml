@@ -6,8 +6,6 @@ env:
   #ENV: staging
   ENV: production
 
-dotenv: ['.env', '{{ .taskEnv }}']
-
 includes:
   # Local, repo-specific tasks
   local:
