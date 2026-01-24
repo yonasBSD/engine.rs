@@ -1,3 +1,4 @@
+use crate::ScaffolderError;
 use miette::{Diagnostic, NamedSource, SourceSpan};
 use thiserror::Error;
 
@@ -38,6 +39,11 @@ pub enum EngineError {
         #[allow(unused)]
         full: FullSource,
     },
+
+    /// Wraps any scaffolder-level diagnostic (DirectoryMissing, ReadmeMissing, etc.)
+    #[error(transparent)]
+    #[diagnostic(transparent)]
+    Scaffolder(#[from] ScaffolderError),
 }
 
 impl EngineError {
@@ -57,7 +63,10 @@ impl EngineError {
 
     pub fn code(&self) -> &'static str {
         match self {
-            EngineError::InvalidPath { .. } => "E0001",
+            EngineError::InvalidPath {
+                ..
+            } => "E0001",
+            EngineError::Scaffolder(err) => err.code_str(),
         }
     }
 }

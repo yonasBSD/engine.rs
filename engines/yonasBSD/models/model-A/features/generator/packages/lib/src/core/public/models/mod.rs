@@ -40,16 +40,24 @@ pub struct Config {
 impl std::fmt::Display for ConfigError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::EmptyList { field } => {
+            Self::EmptyList {
+                field,
+            } => {
                 write!(f, "The list '{field}' cannot be empty.")
             }
-            Self::DuplicateValues { field, duplicates } => {
+            Self::DuplicateValues {
+                field,
+                duplicates,
+            } => {
                 write!(
                     f,
                     "The list '{field}' contains duplicate values: {duplicates:?}"
                 )
             }
-            Self::InvalidName { field, value } => {
+            Self::InvalidName {
+                field,
+                value,
+            } => {
                 write!(
                     f,
                     "Invalid name '{value}' in field '{field}'. Names must match ^[a-zA-Z0-9_-]+$"
@@ -108,13 +116,19 @@ impl Config {
 
         // 1. Empty lists
         if self.projects.is_empty() {
-            errors.push(ConfigError::EmptyList { field: "projects" });
+            errors.push(ConfigError::EmptyList {
+                field: "projects",
+            });
         }
         if self.features.is_empty() {
-            errors.push(ConfigError::EmptyList { field: "features" });
+            errors.push(ConfigError::EmptyList {
+                field: "features",
+            });
         }
         if self.packages.is_empty() {
-            errors.push(ConfigError::EmptyList { field: "packages" });
+            errors.push(ConfigError::EmptyList {
+                field: "packages",
+            });
         }
 
         // 2. Duplicate detection helper

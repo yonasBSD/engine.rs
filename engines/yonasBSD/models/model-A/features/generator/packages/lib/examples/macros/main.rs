@@ -1,6 +1,4 @@
-use engine_rs_lib::config;
-use engine_rs_lib::core::public::dsl::macros::*;
-use engine_rs_lib::projects_phase::ProjectsPhase;
+use engine_rs_lib::*;
 
 fn main() {
     // Declarative macro-based configuration.

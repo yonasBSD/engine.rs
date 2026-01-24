@@ -45,7 +45,9 @@ impl AriadneHandler {
 
         match engine {
             EngineError::InvalidPath {
-                spans, suggestion, ..
+                spans,
+                suggestion,
+                ..
             } => {
                 let mut spans = spans.clone();
                 spans.sort_by_key(|s| s.offset());
@@ -64,7 +66,6 @@ impl AriadneHandler {
 
                 builder =
                     builder.with_note("empty segments occur when two dots appear consecutively");
-
                 builder = builder.with_note("module paths must not contain empty identifiers");
 
                 if let Some(s) = suggestion {
@@ -72,15 +73,21 @@ impl AriadneHandler {
                 }
 
                 builder = builder.with_help("try removing extra dots");
-
                 builder = builder.with_help(format!(
                     "for more information about this error, run: engine --explain {code}",
                 ));
             }
+
+            EngineError::Scaffolder(err) => {
+                // Forward the scaffolder diagnostic to the generic diagnostic renderer
+                return self.render_from_diag(err, f);
+            }
         }
 
         let full = match engine {
-            EngineError::InvalidPath { full, .. } => full.0.as_str(),
+            EngineError::InvalidPath {
+                full, ..
+            } => full.0.as_str(),
             _ => "<no source>",
         };
 

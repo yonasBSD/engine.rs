@@ -32,7 +32,9 @@ fn main() -> io::Result<()> {
             json,
             debug,
         } => cmd_run(explain, quiet, json, debug),
-        Commands::Explain { code } => cmd_explain(code),
+        Commands::Explain {
+            code,
+        } => cmd_explain(code),
     }?;
 
     Ok(())

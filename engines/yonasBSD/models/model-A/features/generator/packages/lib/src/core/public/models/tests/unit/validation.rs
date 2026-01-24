@@ -30,26 +30,23 @@ mod tests {
     fn rejects_duplicates() {
         let c = cfg(vec!["a", "a"], vec!["f"], vec!["p"]);
         let err = c.validate().unwrap_err();
-        assert!(err.iter().any(|e| matches!(
-            e,
-            ConfigError::DuplicateValues {
-                field: "projects",
-                ..
-            }
-        )));
+        assert!(
+            err.iter()
+                .any(|e| matches!(e, ConfigError::DuplicateValues {
+                    field: "projects",
+                    ..
+                }))
+        );
     }
 
     #[test]
     fn rejects_invalid_names() {
         let c = cfg(vec!["bad name"], vec!["f"], vec!["p"]);
         let err = c.validate().unwrap_err();
-        assert!(err.iter().any(|e| matches!(
-            e,
-            ConfigError::InvalidName {
-                field: "projects",
-                ..
-            }
-        )));
+        assert!(err.iter().any(|e| matches!(e, ConfigError::InvalidName {
+            field: "projects",
+            ..
+        })));
     }
 
     #[test]
