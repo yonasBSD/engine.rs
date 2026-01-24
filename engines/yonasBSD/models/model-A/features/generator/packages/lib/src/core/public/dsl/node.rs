@@ -8,7 +8,10 @@ pub struct DslNode<T> {
 
 impl<T> DslNode<T> {
     pub fn new(value: T, span: SourceSpan) -> Self {
-        Self { value, span }
+        Self {
+            value,
+            span,
+        }
     }
 }
 

@@ -71,7 +71,11 @@ impl<F: FileSystem> Scaffolder<F> {
         let _ = env.add_template("internal/mod_export.tpl", TPL_MOD_EXPORT);
         let _ = env.add_template("internal/mod_tests.tpl", TPL_MOD_TESTS);
 
-        Self { fs, base_path, env }
+        Self {
+            fs,
+            base_path,
+            env,
+        }
     }
 
     pub fn calculate_hash(&self, content: &str) -> String {

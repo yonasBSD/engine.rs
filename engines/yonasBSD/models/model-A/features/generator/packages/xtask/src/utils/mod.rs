@@ -345,7 +345,10 @@ pub fn find_crate_root(crate_name: &str) -> Result<PathBuf> {
 pub fn new_error(code: &str, name: Option<&str>) -> Result<()> {
     // Enforce the `E0001`-style format: leading `E` + four ASCII digits.
     if !code.starts_with('E') || code.len() != 5 || !code[1..].chars().all(|c| c.is_ascii_digit()) {
-        return Err(InvalidCodeFormatError { code: code.into() }.into());
+        return Err(InvalidCodeFormatError {
+            code: code.into(),
+        }
+        .into());
     }
 
     let lib_root = find_crate_root("engine-rs-lib")?;
@@ -365,7 +368,10 @@ pub fn new_error(code: &str, name: Option<&str>) -> Result<()> {
 
     // Prevent duplicate codes by scanning the existing enum content.
     if content.contains(&format!("code = \"{code}\"")) {
-        return Err(CodeAlreadyExistsError { code: code.into() }.into());
+        return Err(CodeAlreadyExistsError {
+            code: code.into(),
+        }
+        .into());
     }
 
     let variant_name = name.unwrap_or("NewError");

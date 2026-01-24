@@ -17,7 +17,10 @@ pub struct LoggingFS<'a, F: FileSystem> {
 
 impl<'a, F: FileSystem> LoggingFS<'a, F> {
     pub const fn new(inner: F, pb: &'a cliclack::ProgressBar) -> Self {
-        Self { inner, pb }
+        Self {
+            inner,
+            pb,
+        }
     }
 
     pub fn log_ephemeral(&self, action: &str, path: &Path) {

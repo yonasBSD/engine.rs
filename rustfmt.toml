@@ -1,0 +1,15 @@
+# Enable unstable features for Nightly
+unstable_features = true
+style_edition = "2024"
+edition = "2024"
+
+# The vertical formatting you liked
+indent_style = "Block"
+fn_params_layout = "Tall"
+
+# Ensures builders and structs stay vertical
+struct_lit_single_line = false
+struct_field_align_threshold = 0
+
+# This helps with the 'ariadne' builder chains
+overflow_delimited_expr = true

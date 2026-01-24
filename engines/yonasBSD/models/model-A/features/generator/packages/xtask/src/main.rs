@@ -36,7 +36,10 @@ fn real_main() -> miette::Result<()> {
     // so that Miette diagnostics can bubble up naturally.
     match cli.command {
         Commands::Generate {} => commands::generate::run()?,
-        Commands::New { code, name } => commands::new::run(code, name)?,
+        Commands::New {
+            code,
+            name,
+        } => commands::new::run(code, name)?,
         Commands::Check {} => commands::check::run()?,
     }
 
