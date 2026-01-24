@@ -3,8 +3,9 @@
 //! This verifies that `{{ project }}`, `{{ model }}`, and `{{ feature }}`
 //! are correctly expanded in readme target paths.
 
-use crate::helpers::*;
 use engine_rs_lib::core::public::dsl::prelude::*;
+
+use crate::helpers::*;
 
 #[test]
 fn snapshot_readme_templated_paths() -> miette::Result<()> {

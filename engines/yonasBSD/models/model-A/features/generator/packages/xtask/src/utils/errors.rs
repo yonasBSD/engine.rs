@@ -82,7 +82,8 @@ pub struct InvalidCodeFormatError {
 // ────────────────────────────────────────────────────────────────
 //
 
-/// Diagnostic emitted when attempting to scaffold a sidecar that already exists.
+/// Diagnostic emitted when attempting to scaffold a sidecar that already
+/// exists.
 ///
 /// This prevents accidental overwrites of manually curated documentation.
 #[derive(Debug, Error, Diagnostic)]
@@ -215,7 +216,8 @@ pub struct NonSequentialCodeError {
 // ────────────────────────────────────────────────────────────────
 //
 
-/// Diagnostic emitted when enum variant order does not match numeric code order.
+/// Diagnostic emitted when enum variant order does not match numeric code
+/// order.
 ///
 /// This ensures that the `EngineError` enum remains ordered by code, which
 /// improves readability and keeps diffs stable as new errors are added.

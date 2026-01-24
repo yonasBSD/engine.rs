@@ -1,7 +1,6 @@
 use std::path::Path;
 
-use crate::helpers::ScaffolderTestHarness;
-use crate::helpers::read_file;
+use crate::helpers::{ScaffolderTestHarness, read_file};
 
 /// DSL for working with templates and generated files in tests.
 ///

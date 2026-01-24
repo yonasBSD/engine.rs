@@ -1,13 +1,14 @@
-use crate::{
-    is_quiet, load_config, print_explain_rules, print_json_ok, print_json_validation_errors,
-};
+use std::io;
 
 use cliclack::{
     log::{error, success, warning},
     outro,
 };
 use console::style;
-use std::io;
+
+use crate::{
+    is_quiet, load_config, print_explain_rules, print_json_ok, print_json_validation_errors,
+};
 
 //
 // VALIDATE COMMAND
@@ -28,7 +29,7 @@ pub fn cmd_validate(explain: bool, quiet: bool, json: bool) -> io::Result<()> {
                 let _ = success("Validation Passed");
                 let _ = outro(style(" Validation Complete ").black().on_green());
             }
-        }
+        },
         Err(errors) => {
             if json {
                 print_json_validation_errors(&errors);
@@ -39,7 +40,7 @@ pub fn cmd_validate(explain: bool, quiet: bool, json: bool) -> io::Result<()> {
                 }
             }
             std::process::exit(1);
-        }
+        },
     }
 
     Ok(())

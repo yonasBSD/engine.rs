@@ -1,5 +1,4 @@
-use engine_rs_lib::core::public::dsl::prelude::*;
-use engine_rs_lib::{EngineError, handlers::install_ariadne_hook};
+use engine_rs_lib::{EngineError, core::public::dsl::prelude::*, handlers::install_ariadne_hook};
 
 fn main() {
     // This example intentionally triggers an error to show off
@@ -24,6 +23,6 @@ fn main() {
         Ok(_) => println!("Unexpected success — error example didn't trigger"),
         Err(err) => {
             eprintln!("{}", miette::Report::new(err)); // Miette pretty-print
-        }
+        },
     }
 }

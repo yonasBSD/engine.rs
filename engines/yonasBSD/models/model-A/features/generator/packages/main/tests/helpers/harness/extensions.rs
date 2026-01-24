@@ -1,11 +1,11 @@
-use assert_cmd::cargo::cargo_bin_cmd;
-use assert_fs::fixture::ChildPath;
-use assert_fs::prelude::*;
-use predicates::prelude::*;
 use std::path::Path;
 
-use crate::helpers::*;
+use assert_cmd::cargo::cargo_bin_cmd;
+use assert_fs::{fixture::ChildPath, prelude::*};
 use engine_rs_lib::*;
+use predicates::prelude::*;
+
+use crate::helpers::*;
 
 /// Trait providing all harness functionality.
 /// Keeps the core struct clean and focused.

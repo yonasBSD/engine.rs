@@ -1,5 +1,4 @@
-use crate::helpers::ScaffolderTestHarness;
-use crate::helpers::{capture_tree, read_file};
+use crate::helpers::{ScaffolderTestHarness, capture_tree, read_file};
 
 /// Extensions focused on snapshot ergonomics.
 ///

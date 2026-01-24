@@ -1,5 +1,4 @@
-use crate::Config;
-use crate::core::public::dsl::prelude::ProjectsPhase;
+use crate::{Config, core::public::dsl::prelude::ProjectsPhase};
 
 /// Re-exported function-style wrapper if you prefer calling it from code.
 ///

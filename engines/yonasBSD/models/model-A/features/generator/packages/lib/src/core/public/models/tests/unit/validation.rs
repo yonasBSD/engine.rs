@@ -1,7 +1,8 @@
 #[cfg(test)]
 mod tests {
-    use crate::*;
     use std::collections::HashMap;
+
+    use crate::*;
 
     fn cfg(p: Vec<&str>, f: Vec<&str>, pk: Vec<&str>) -> Config {
         Config {

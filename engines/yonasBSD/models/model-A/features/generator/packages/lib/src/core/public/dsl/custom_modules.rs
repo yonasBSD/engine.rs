@@ -1,5 +1,6 @@
-use crate::{EngineError, enums::DirSpec};
 use std::collections::HashMap;
+
+use crate::{EngineError, enums::DirSpec};
 
 /// Insert a custom module specification into the `custom_modules` map,
 /// using a dotted path like `"api.core"` and a list of backends.

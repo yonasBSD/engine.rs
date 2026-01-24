@@ -1,9 +1,9 @@
-use ariadne::{Color, Label, Report, ReportKind, Source};
-use miette::{Diagnostic, ReportHandler};
 use std::fmt;
 
-use crate::EngineError;
-use crate::wrapped::WrappedDiagnostic;
+use ariadne::{Color, Label, Report, ReportKind, Source};
+use miette::{Diagnostic, ReportHandler};
+
+use crate::{EngineError, wrapped::WrappedDiagnostic};
 
 pub fn install_ariadne_hook() {
     miette::set_hook(Box::new(|_| Box::new(AriadneHandler)))
@@ -76,12 +76,12 @@ impl AriadneHandler {
                 builder = builder.with_help(format!(
                     "for more information about this error, run: engine --explain {code}",
                 ));
-            }
+            },
 
             EngineError::Scaffolder(err) => {
                 // Forward the scaffolder diagnostic to the generic diagnostic renderer
                 return self.render_from_diag(err, f);
-            }
+            },
         }
 
         let full = match engine {

@@ -1,9 +1,12 @@
 mod errors;
 
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
+
 use errors::*;
 use miette::{IntoDiagnostic, NamedSource, Result, SourceSpan};
-use std::fs;
-use std::path::{Path, PathBuf};
 use syn::{Attribute, ItemEnum, Lit};
 use walkdir::WalkDir;
 
@@ -100,7 +103,8 @@ fn linecol_to_offset(text: &str, line: usize, col: usize) -> usize {
 /// 1. Locates the `engine-rs-lib` crate in the workspace.
 /// 2. Walks its `src` tree to find all `EngineError` enums.
 /// 3. Extracts and validates all error variants.
-/// 4. Renders a Markdown index and writes it to `engine-rs/assets/error-index.md`.
+/// 4. Renders a Markdown index and writes it to
+///    `engine-rs/assets/error-index.md`.
 ///
 /// Any structural issues (missing docs, missing sidecars, non-sequential codes,
 /// or enum ordering mismatches) are surfaced as rich Miette diagnostics.
@@ -220,7 +224,8 @@ pub fn find_diagnostic_code(attrs: &[Attribute]) -> Result<Option<String>> {
 // ────────────────────────────────────────────────────────────────
 //
 
-/// Collect all `///` doc comments from a list of attributes into a single string.
+/// Collect all `///` doc comments from a list of attributes into a single
+/// string.
 ///
 /// Each doc line is concatenated with a trailing newline to preserve the
 /// original paragraph structure as closely as possible.

@@ -2,13 +2,13 @@ mod commands;
 mod traits;
 mod utils;
 
-use commands::*;
-use traits::*;
-use utils::*;
+use std::io;
 
 use clap::Parser;
+use commands::*;
 use engine_rs_lib::handlers::install_ariadne_hook;
-use std::io;
+use traits::*;
+use utils::*;
 
 //
 // MAIN ENTRYPOINT

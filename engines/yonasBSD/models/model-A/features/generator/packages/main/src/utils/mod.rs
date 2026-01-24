@@ -3,15 +3,14 @@
 //
 
 mod assets;
+use std::fs;
+
 pub use assets::*;
-
-use engine_rs_lib::core::{Config, ConfigError};
-
 use cliclack::{
     log::{error, step},
     note,
 };
-use std::fs;
+use engine_rs_lib::core::{Config, ConfigError};
 
 //
 // LOAD CONFIG

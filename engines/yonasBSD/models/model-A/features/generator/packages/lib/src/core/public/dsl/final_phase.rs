@@ -1,7 +1,10 @@
-use crate::ReadmeConfig;
-use crate::core::public::{Config, dsl::DslNode};
-use crate::enums::DirSpec;
 use std::collections::HashMap;
+
+use crate::{
+    ReadmeConfig,
+    core::public::{Config, dsl::DslNode},
+    enums::DirSpec,
+};
 
 #[derive(Debug)]
 pub struct FinalPhase {
