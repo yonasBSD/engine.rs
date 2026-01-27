@@ -13,3 +13,6 @@ pub use macros::*;
 pub use template_dsl::*;
 pub use tree_assertions::*;
 pub use tree_utils::*;
+
+#[cfg(test)]
+mod tests;

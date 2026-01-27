@@ -2,8 +2,6 @@
 // CONFIGURATION MODELS
 // ==========================================================
 
-mod tests;
-
 use std::collections::HashMap;
 
 use regex::Regex;
@@ -248,3 +246,6 @@ impl Config {
         }
     }
 }
+
+#[cfg(test)]
+mod tests;
