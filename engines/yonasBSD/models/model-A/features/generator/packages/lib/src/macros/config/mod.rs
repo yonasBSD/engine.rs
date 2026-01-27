@@ -1,7 +1,7 @@
 /// Declarative macro entry point for the config DSL.
 ///
 /// This macro expands into the typed, staged DSL:
-/// ProjectsPhase → FeaturesPhase → PackagesPhase → FinalPhase → Config
+/// `ProjectsPhase` → `FeaturesPhase` → `PackagesPhase` → `FinalPhase` → Config
 #[macro_export]
 macro_rules! config {
     (

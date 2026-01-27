@@ -5,10 +5,13 @@ mod utils;
 use std::io;
 
 use clap::Parser;
-use commands::*;
+use commands::{Cli, Commands, cmd_explain, cmd_init, cmd_run, cmd_validate};
 use engine_rs_lib::handlers::install_ariadne_hook;
-use traits::*;
-use utils::*;
+use traits::LoggingFS;
+use utils::{
+    is_quiet, load_config, print_explain_rules, print_json_integrity_errors, print_json_ok,
+    print_json_validation_errors,
+};
 
 //
 // MAIN ENTRYPOINT

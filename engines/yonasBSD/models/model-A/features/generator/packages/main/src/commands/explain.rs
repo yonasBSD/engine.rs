@@ -12,12 +12,11 @@ pub fn cmd_explain(code: String) -> io::Result<()> {
 
     let index = std::str::from_utf8(file.data.as_ref()).expect("error-index.md is not valid UTF-8");
 
-    match extract_section(index, &code) {
-        Some(section) => print_colored_explanation(&section),
-        None => {
-            eprintln!("No explanation found for error code {code}");
-            std::process::exit(1);
-        },
+    if let Some(section) = extract_section(index, &code) {
+        print_colored_explanation(&section)
+    } else {
+        eprintln!("No explanation found for error code {code}");
+        std::process::exit(1);
     }
 
     Ok(())

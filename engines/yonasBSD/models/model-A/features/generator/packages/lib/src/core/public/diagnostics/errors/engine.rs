@@ -42,8 +42,8 @@ pub enum EngineError {
         full: FullSource,
     },
 
-    /// Wraps any scaffolder-level diagnostic (DirectoryMissing, ReadmeMissing,
-    /// etc.)
+    /// Wraps any scaffolder-level diagnostic (`DirectoryMissing`,
+    /// `ReadmeMissing`, etc.)
     #[error(transparent)]
     #[diagnostic(transparent)]
     Scaffolder(#[from] ScaffolderError),
@@ -55,7 +55,7 @@ impl EngineError {
         let spans = find_empty_segments(&path);
         let suggestion = suggest_fixed_path(&path);
 
-        EngineError::InvalidPath {
+        Self::InvalidPath {
             src: NamedSource::new("engine", path.clone()),
             full: FullSource(path.clone()),
             path,
@@ -64,12 +64,13 @@ impl EngineError {
         }
     }
 
-    pub fn code(&self) -> &'static str {
+    #[must_use]
+    pub const fn code(&self) -> &'static str {
         match self {
-            EngineError::InvalidPath {
+            Self::InvalidPath {
                 ..
             } => "E0001",
-            EngineError::Scaffolder(err) => err.code_str(),
+            Self::Scaffolder(err) => err.code_str(),
         }
     }
 }
@@ -84,7 +85,7 @@ fn find_empty_segments(path: &str) -> Vec<SourceSpan> {
 
         if c1 == '.' && c2 == '.' {
             // zero-length span → rustc-style pointing label
-            spans.push(SourceSpan::new(idx.into(), 0usize.into()));
+            spans.push(SourceSpan::new(idx.into(), 0usize));
         }
     }
 
