@@ -1,3 +1,16 @@
+# TODO
+
+## Documentation
+
+- engines/yonasBSD/models/model-A/features/docs
+  - release notes => dodeca
+  - general blog  => dodeca
+- engines/yonasBSD/models/model-A/features/.../packages
+  - cli => doctave
+  - api => docapella
+  - lib => mdbook
+  - testing => mdbook
+
 extend the generator to include ScaffolderError too
 
 enforce that every error has an E‑code
@@ -10,9 +23,6 @@ A span‑aware parser that returns multiple labels
 A multi‑error diagnostic for multiple empty segments
 
 A builder‑style API for constructing diagnostics
-
-A git diff patch you can apply directly
-
 
 
 the refactored DSL macro that emits spans
