@@ -19,12 +19,13 @@ pub enum ScaffolderError {
 }
 
 impl ScaffolderError {
-    pub fn code_str(&self) -> &'static str {
+    #[must_use]
+    pub const fn code_str(&self) -> &'static str {
         match self {
-            ScaffolderError::DirectoryMissing {
+            Self::DirectoryMissing {
                 ..
             } => "S0001",
-            ScaffolderError::ReadmeMissing {
+            Self::ReadmeMissing {
                 ..
             } => "S0002",
         }

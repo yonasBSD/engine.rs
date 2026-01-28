@@ -12,6 +12,7 @@ use crate::{Config, core::public::dsl::prelude::ProjectsPhase};
 ///     packages { "engine-rs", "engine-rs-lib" }
 /// };
 /// ```
+#[must_use]
 pub fn config_example() -> Config {
     crate::config! {
         projects { "core", "cli" }

@@ -82,7 +82,7 @@ impl PackagesPhase {
     }
 
     #[must_use]
-    pub fn next(self) -> Self {
+    pub const fn next(self) -> Self {
         self
     }
 

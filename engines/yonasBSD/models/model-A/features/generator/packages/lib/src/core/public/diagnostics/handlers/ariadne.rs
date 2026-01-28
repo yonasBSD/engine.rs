@@ -31,7 +31,7 @@ impl ReportHandler for AriadneHandler {
             return self.render_from_diag(&*wrapped.0, f);
         }
 
-        write!(f, "{}", error)
+        write!(f, "{error}")
     }
 }
 
@@ -50,7 +50,7 @@ impl AriadneHandler {
                 ..
             } => {
                 let mut spans = spans.clone();
-                spans.sort_by_key(|s| s.offset());
+                spans.sort_by_key(miette::SourceSpan::offset);
 
                 for (i, span) in spans.iter().enumerate() {
                     let start = span.offset();
@@ -69,7 +69,7 @@ impl AriadneHandler {
                 builder = builder.with_note("module paths must not contain empty identifiers");
 
                 if let Some(s) = suggestion {
-                    builder = builder.with_help(format!("did you mean `{}`?", s));
+                    builder = builder.with_help(format!("did you mean `{s}`?"));
                 }
 
                 builder = builder.with_help("try removing extra dots");
@@ -106,7 +106,10 @@ impl AriadneHandler {
         let mut builder =
             Report::build(ReportKind::Error, (file_id, 0..0)).with_message(diag.to_string());
 
-        let labels: Vec<_> = diag.labels().map(|l| l.collect()).unwrap_or_default();
+        let labels: Vec<_> = diag
+            .labels()
+            .map(std::iter::Iterator::collect)
+            .unwrap_or_default();
 
         for label in &labels {
             let start = label.offset();
@@ -119,27 +122,27 @@ impl AriadneHandler {
             );
         }
 
-        if let Some(src) = diag.source_code() {
-            if let Some(label) = labels.first() {
-                let start = label.offset();
-                let len = label.len();
-                let span = miette::SourceSpan::new(start.into(), len.into());
+        if let Some(src) = diag.source_code()
+            && let Some(label) = labels.first()
+        {
+            let start = label.offset();
+            let len = label.len();
+            let span = miette::SourceSpan::new(start.into(), len);
 
-                if let Ok(contents) = src.read_span(&span, 0, 0) {
-                    let text = std::str::from_utf8(contents.data()).unwrap_or("<invalid utf8>");
+            if let Ok(contents) = src.read_span(&span, 0, 0) {
+                let text = std::str::from_utf8(contents.data()).unwrap_or("<invalid utf8>");
 
-                    let mut out = Vec::new();
+                let mut out = Vec::new();
 
-                    builder
-                        .finish()
-                        .write((file_id, Source::from(text)), &mut out)
-                        .map_err(|_| fmt::Error)?;
+                builder
+                    .finish()
+                    .write((file_id, Source::from(text)), &mut out)
+                    .map_err(|_| fmt::Error)?;
 
-                    return write!(f, "{}", String::from_utf8_lossy(&out));
-                }
+                return write!(f, "{}", String::from_utf8_lossy(&out));
             }
         }
 
-        write!(f, "{}", diag)
+        write!(f, "{diag}")
     }
 }

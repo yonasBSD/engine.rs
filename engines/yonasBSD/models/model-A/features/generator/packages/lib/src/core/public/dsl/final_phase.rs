@@ -17,6 +17,7 @@ pub struct FinalPhase {
 }
 
 impl FinalPhase {
+    #[must_use]
     pub fn build(self) -> Config {
         Config {
             projects: self.projects.into_iter().map(|n| n.value).collect(),
