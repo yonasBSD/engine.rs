@@ -2,9 +2,9 @@ mod commands;
 mod utils;
 
 use clap::Parser;
-use commands::*;
+use commands::enums;
 
-use crate::enums::*;
+use crate::enums::Commands;
 
 /// Process-wide entrypoint for the `xtask` binary.
 ///
@@ -20,7 +20,7 @@ fn main() {
     // Route into the real main logic and surface any diagnostics in a simple
     // debug format. Non-zero exit codes signal failure to CI and scripts.
     if let Err(err) = real_main() {
-        eprintln!("{:?}", err);
+        eprintln!("{err:?}");
         std::process::exit(1);
     }
 }

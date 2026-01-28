@@ -5,7 +5,11 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use errors::*;
+use errors::{
+    CodeAlreadyExistsError, CrateNotFoundError, DuplicateCodeError, EngineEnumNotFoundError,
+    EnumOrderError, InvalidCodeFormatError, MissingDocsError, MissingSidecarError,
+    NonSequentialCodeError, SidecarExistsError,
+};
 use miette::{IntoDiagnostic, NamedSource, Result, SourceSpan};
 use syn::{Attribute, ItemEnum, Lit};
 use walkdir::WalkDir;
@@ -45,13 +49,13 @@ pub fn extract_error_variants(e: &ItemEnum, file: &Path) -> Result<Vec<ErrorDoc>
                 let offset = linecol_to_offset(&file_text, start.line, start.column);
                 let length = linecol_to_offset(&file_text, end.line, end.column) - offset;
 
-                let src = NamedSource::new(file.display().to_string(), file_text.clone());
+                let src = NamedSource::new(file.display().to_string(), file_text);
 
                 return Err(MissingDocsError {
                     code,
                     name: variant.ident.to_string(),
                     src,
-                    span: SourceSpan::new(offset.into(), length.into()),
+                    span: SourceSpan::new(offset.into(), length),
                 }
                 .into());
             }
@@ -119,7 +123,7 @@ pub fn generate_error_index() -> Result<()> {
     // changes as long as the enum name remains stable.
     for entry in WalkDir::new(&lib_src)
         .into_iter()
-        .filter_map(|e| e.ok())
+        .filter_map(std::result::Result::ok)
         .filter(|e| e.path().extension().and_then(|s| s.to_str()) == Some("rs"))
     {
         let path = entry.path();
@@ -127,10 +131,10 @@ pub fn generate_error_index() -> Result<()> {
         let file = syn::parse_file(&content).into_diagnostic()?;
 
         for item in file.items {
-            if let syn::Item::Enum(e) = item {
-                if e.ident == "EngineError" {
-                    errors.extend(extract_error_variants(&e, path)?);
-                }
+            if let syn::Item::Enum(e) = item
+                && e.ident == "EngineError"
+            {
+                errors.extend(extract_error_variants(&e, path)?);
             }
         }
     }
@@ -164,7 +168,7 @@ pub fn generate_error_index() -> Result<()> {
 /// structural metadata (source file, enum order) needed for validation and
 /// index generation.
 #[derive(Debug, Clone)]
-pub(crate) struct ErrorDoc {
+pub struct ErrorDoc {
     /// The diagnostic error code (e.g. `E0001`).
     pub code: String,
 
@@ -233,15 +237,13 @@ pub fn collect_doc_comments(attrs: &[Attribute]) -> String {
     let mut docs = String::new();
 
     for attr in attrs {
-        if attr.path().is_ident("doc") {
-            if let Ok(meta) = attr.meta.require_name_value() {
-                if let syn::Expr::Lit(expr_lit) = &meta.value {
-                    if let Lit::Str(s) = &expr_lit.lit {
-                        docs.push_str(&s.value());
-                        docs.push('\n');
-                    }
-                }
-            }
+        if attr.path().is_ident("doc")
+            && let Ok(meta) = attr.meta.require_name_value()
+            && let syn::Expr::Lit(expr_lit) = &meta.value
+            && let Lit::Str(s) = &expr_lit.lit
+        {
+            docs.push_str(&s.value());
+            docs.push('\n');
         }
     }
 
@@ -401,10 +403,10 @@ pub fn new_error(code: &str, name: Option<&str>) -> Result<()> {
 
     // Create a stub sidecar file to be filled in by the developer.
     let sidecar = format!(
-        r#"# {code}: {variant_name}
+        r"# {code}: {variant_name}
 
 TODO: Write extended documentation for {variant_name}.
-"#
+"
     );
     fs::write(&sidecar_path, sidecar).into_diagnostic()?;
 
@@ -515,7 +517,7 @@ pub fn check_errors() -> Result<()> {
     // Walk the library source tree and collect all `EngineError` variants.
     for entry in WalkDir::new(&lib_src)
         .into_iter()
-        .filter_map(|e| e.ok())
+        .filter_map(std::result::Result::ok)
         .filter(|e| e.path().extension().and_then(|s| s.to_str()) == Some("rs"))
     {
         let path = entry.path();
@@ -523,10 +525,10 @@ pub fn check_errors() -> Result<()> {
         let file = syn::parse_file(&content).into_diagnostic()?;
 
         for item in file.items {
-            if let syn::Item::Enum(e) = item {
-                if e.ident == "EngineError" {
-                    errors.extend(extract_error_variants(&e, path)?);
-                }
+            if let syn::Item::Enum(e) = item
+                && e.ident == "EngineError"
+            {
+                errors.extend(extract_error_variants(&e, path)?);
             }
         }
     }
