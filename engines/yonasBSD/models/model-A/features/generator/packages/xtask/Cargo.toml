@@ -8,6 +8,10 @@ license = "MIT"
 cargo_metadata = "0.23.1"
 clap = { version = "4.5.54", features = ["derive"] }
 miette = { version = "7.6.0", features = ["fancy", "syntect-highlighter"] }
+proc-macro2 = { version = "1.0.106", features = ["span-locations"] }
+quote = "1.0.44"
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
 syn = { version = "2.0.114", features = ["full"] }
 thiserror = "2.0.18"
 walkdir = "2.5.0"
