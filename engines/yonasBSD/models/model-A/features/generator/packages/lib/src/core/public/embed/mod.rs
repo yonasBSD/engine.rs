@@ -11,24 +11,27 @@ pub struct Asset;
 pub const DEFAULT_README_TPL: &str = "# {{ project_name }}\nGenerated via Scaffolder.\n";
 pub const TPL_CARGO: &str = r#"[workspace]
 members = [
-    "{{ feature_name }}/packages/cli",
-    "{{ feature_name }}/packages/api",
-    "{{ feature_name }}/packages/lib",
-    "{{ feature_name }}/packages/testing",
-    "{{ feature_name }}/packages/{{ package_name }}",
+    "packages/cli",
+    "packages/api",
+    "packages/lib",
+    "packages/testing",
 ]
 resolver = "2""#;
+
+pub const TPL_MEMBER_CARGO: &str = r#"[package]
+name = "{{ package }}"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+name = "{{ package | replace("-", "_") | lower }}"
+path = "src/lib.rs""#;
 
 pub const TPL_MOD_EXPORT: &str = r"pub mod core;
 pub mod enums;
 pub mod macros;
 pub mod traits;
-pub mod utils;
-
-// Core internal exports
-pub mod backends;
-pub mod frontends;
-";
+pub mod utils;";
 
 pub const TPL_MOD_TESTS: &str = "pub mod unit;\npub mod integration;\n";
 

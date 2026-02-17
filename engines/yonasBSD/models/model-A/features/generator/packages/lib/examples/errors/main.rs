@@ -8,7 +8,7 @@ fn main() {
 
     // Example mistake: invalid custom module path (empty segment)
     let result = (|| -> Result<_, EngineError> {
-        ProjectsPhase::new()
+        let _ = ProjectsPhase::new()
             .project("demo")
             .next()
             .feature("alpha")

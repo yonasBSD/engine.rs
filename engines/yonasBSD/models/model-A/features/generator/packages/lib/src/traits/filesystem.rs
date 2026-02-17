@@ -14,7 +14,7 @@ use minijinja::{Environment, context};
 
 use crate::{
     core::{
-        Asset, Config, DEFAULT_README_TPL, EXTRA_TOP_LEVEL_DIRS, TPL_CARGO, TPL_MOD_EXPORT,
+        Asset, Config, DEFAULT_README_TPL, EXTRA_TOP_LEVEL_DIRS, TPL_CARGO, TPL_MEMBER_CARGO, TPL_MOD_EXPORT,
         TPL_MOD_TESTS,
     },
     enums::DirSpec,
@@ -71,6 +71,7 @@ impl<F: FileSystem> Scaffolder<F> {
         // Register Internal Fallbacks
         let _ = env.add_template("internal/readme.tpl", DEFAULT_README_TPL);
         let _ = env.add_template("internal/cargo.tpl", TPL_CARGO);
+        let _ = env.add_template("internal/member_cargo.tpl", TPL_MEMBER_CARGO);
         let _ = env.add_template("internal/mod_export.tpl", TPL_MOD_EXPORT);
         let _ = env.add_template("internal/mod_tests.tpl", TPL_MOD_TESTS);
 
@@ -101,21 +102,29 @@ impl<F: FileSystem> Scaffolder<F> {
 
                 // 1. Generate Cargo.toml for this feature
                 {
-                    let ctx = context!(
-                        project_name => project,
-                        feature_name => feature,
-                        // package_name is not needed for Cargo.toml, but we keep it
-                        // available for templates that might reference it.
-                        package_name => ""
+                    // Build the members list dynamically
+                    let mut members = vec![
+                        "packages/cli".to_string(),
+                        "packages/api".to_string(),
+                        "packages/lib".to_string(),
+                        "packages/testing".to_string(),
+                    ];
+
+                    // Add custom packages
+                    for package in &config.packages {
+                        members.push(format!("packages/{}", package));
+                    }
+
+                    // Build the Cargo.toml content manually
+                    let cargo_content = format!(
+                        "[workspace]\nmembers = [\n{}\n]\nresolver = \"2\"\n",
+                        members.iter()
+                        .map(|m| format!("    \"{}\",", m))
+                        .collect::<Vec<_>>()
+                        .join("\n")
                     );
 
                     let cargo_path = feature_root.join("Cargo.toml");
-                    let cargo_content = self
-                        .env
-                        .get_template("internal/cargo.tpl")
-                        .unwrap()
-                        .render(ctx.clone())
-                        .unwrap();
 
                     self.fs.create_dir_all(cargo_path.parent().unwrap())?;
                     self.fs.write_file(&cargo_path, &cargo_content)?;
@@ -202,10 +211,21 @@ impl<F: FileSystem> Scaffolder<F> {
         }
 
         // 2. Base package structure (src + tests)
+        let member_cargo_path = pkg_path.join("Cargo.toml");
+        let member_cargo_content = self
+            .env
+            .get_template("internal/member_cargo.tpl")
+            .unwrap()
+            .render(ctx.clone())
+            .unwrap();
+        self.fs.create_dir_all(&pkg_path)?;
+        self.fs.write_file(&member_cargo_path, &member_cargo_content)?;
+        manifest.insert(member_cargo_path, self.calculate_hash(&member_cargo_content));
+
         let src_dir = pkg_path.join("src");
         self.fs.create_dir_all(&src_dir)?;
 
-        let mod_path = pkg_path.join("mod.rs");
+        let mod_path = pkg_path.join("src/lib.rs");
         let mod_content = self
             .env
             .get_template("internal/mod_export.tpl")
@@ -258,6 +278,11 @@ impl<F: FileSystem> Scaffolder<F> {
                 self.calculate_hash("// Automated Integration Tests\n"),
             );
         }
+
+        let core_mod_path = pkg_path.join("src/core/mod.rs");
+        let core_mod_content = "pub mod backends;\npub mod frontends;\npub mod public;\npub mod internal;\npub mod private;\n";
+        self.fs.write_file(&core_mod_path, &core_mod_content)?;
+        manifest.insert(core_mod_path, self.calculate_hash(&core_mod_content));
 
         // 4. Extra directories
         for extra in EXTRA_TOP_LEVEL_DIRS {
