@@ -8,24 +8,47 @@ use rust_embed::RustEmbed;
 #[folder = "templates/"]
 pub struct Asset;
 
-pub const DEFAULT_README_TPL: &str = "# {{ project_name }}\nGenerated via Scaffolder.\n";
+pub const DEFAULT_README_TPL: &str = "# {{ project_name }}\nGenerated via engine.rs.\n";
+
+/// Workspace Cargo.toml template.
+/// Context variables:
+///   - `members`   : pre-rendered newline-joined member strings
+///   - `workspace` : WorkspaceMetadata (version, edition, description, license,
+///     repository, keywords, categories)
 pub const TPL_CARGO: &str = r#"[workspace]
 members = [
-    "packages/cli",
-    "packages/api",
-    "packages/lib",
-    "packages/testing",
+{{ members }}
 ]
-resolver = "2""#;
+resolver = "2"
 
+[workspace.package]
+version = "{{ workspace.version }}"
+edition = "{{ workspace.edition }}"
+description = "{{ workspace.description }}"
+license = "{{ workspace.license }}"
+repository = "{{ workspace.repository }}"
+keywords = {{ workspace.keywords | tojson }}
+categories = {{ workspace.categories | tojson }}"#;
+
+/// Member Cargo.toml template.
+/// All fields inherit from the workspace.
+/// The `lib` package omits the `lib = { path = "../lib" }` self-dependency.
 pub const TPL_MEMBER_CARGO: &str = r#"[package]
 name = "{{ package }}"
-version = "0.1.0"
-edition = "2024"
+version = { workspace = true }
+edition = { workspace = true }
+description = { workspace = true }
+license = { workspace = true }
+repository = { workspace = true }
+keywords = { workspace = true }
+categories = { workspace = true }
 
 [lib]
 name = "{{ package | replace("-", "_") | lower }}"
-path = "src/lib.rs""#;
+path = "src/lib.rs"
+
+[dependencies]
+{% if package != "lib" %}lib = { path = "../lib" }{% endif %}"#;
 
 pub const TPL_MOD_EXPORT: &str = r"pub mod core;
 pub mod enums;

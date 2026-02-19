@@ -79,7 +79,6 @@ impl AriadneHandler {
             },
 
             EngineError::Scaffolder(err) => {
-                // Forward the scaffolder diagnostic to the generic diagnostic renderer
                 return self.render_from_diag(err, f);
             },
         }

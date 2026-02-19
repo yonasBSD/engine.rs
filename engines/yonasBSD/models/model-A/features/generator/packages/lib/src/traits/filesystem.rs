@@ -15,13 +15,10 @@ use minijinja::{Environment, context};
 use crate::{
     core::{
         Asset, Config, DEFAULT_README_TPL, EXTRA_TOP_LEVEL_DIRS, TPL_CARGO, TPL_MEMBER_CARGO,
-        TPL_MOD_EXPORT, TPL_MOD_TESTS,
+        TPL_MOD_EXPORT, TPL_MOD_TESTS, internal::DEFAULT_PACKAGES,
     },
     enums::DirSpec,
 };
-
-// Single source of truth for the default sub-packages.
-const DEFAULT_PACKAGES: &[&str] = &["cli", "api", "webui", "lib", "testing"];
 
 pub trait FileSystem {
     fn create_dir_all(&self, path: &Path) -> io::Result<()>;
@@ -65,7 +62,8 @@ impl TemplateStore {
             }
         }
 
-        // Internal fallbacks
+        // Internal fallbacks (embedded assets registered first take priority;
+        // these are no-ops if the asset already exists under the same name).
         entries.push(("internal/readme.tpl".into(), DEFAULT_README_TPL.into()));
         entries.push(("internal/cargo.tpl".into(), TPL_CARGO.into()));
         entries.push(("internal/member_cargo.tpl".into(), TPL_MEMBER_CARGO.into()));
@@ -87,8 +85,7 @@ impl TemplateStore {
         for (name, body) in &self.entries {
             let name: &'static str = Box::leak(name.clone().into_boxed_str());
             let body: &'static str = Box::leak(body.clone().into_boxed_str());
-            // Silently skip duplicates (embedded assets take priority; internal
-            // fallbacks registered second will be no-ops if the asset exists).
+            // Silently skip duplicates — embedded assets take priority.
             let _ = env.add_template(name, body);
         }
         env
@@ -172,21 +169,28 @@ impl<F: FileSystem> Scaffolder<F> {
         feature_root: &Path,
         manifest: &mut HashMap<PathBuf, String>,
     ) -> io::Result<()> {
-        // Derive members from the single source of truth, then append custom ones
-        let members: Vec<String> = DEFAULT_PACKAGES
+        // Build the members list from DEFAULT_PACKAGES + user-defined packages.
+        // DEFAULT_PACKAGES is the single source of truth — no hardcoding here.
+        let members: String = DEFAULT_PACKAGES
             .iter()
-            .map(|p| format!("packages/{p}"))
-            .chain(config.packages.iter().map(|p| format!("packages/{p}")))
-            .collect();
+            .map(|p| format!("    \"packages/{p}\","))
+            .chain(
+                config
+                    .packages
+                    .iter()
+                    .map(|p| format!("    \"packages/{p}\",")),
+            )
+            .collect::<Vec<_>>()
+            .join("\n");
 
-        let cargo_content = format!(
-            "[workspace]\nmembers = [\n{}\n]\nresolver = \"2\"\n",
-            members
-                .iter()
-                .map(|m| format!("    \"{m}\","))
-                .collect::<Vec<_>>()
-                .join("\n")
+        let ctx = context!(
+            members   => members,
+            workspace => &config.workspace,
         );
+
+        let cargo_content = self
+            .render_template("internal/cargo.tpl", &ctx)
+            .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
 
         let cargo_path = feature_root.join("Cargo.toml");
         self.fs.create_dir_all(cargo_path.parent().unwrap())?;
@@ -259,6 +263,8 @@ impl<F: FileSystem> Scaffolder<F> {
 
     // ----------------------------------------------------------
     // Member Cargo.toml + src/lib.rs
+    // The template itself handles the conditional `lib` dep via
+    // `{% if package != "lib" %}`.
     // ----------------------------------------------------------
     fn write_member_cargo(
         &self,
@@ -337,9 +343,8 @@ impl<F: FileSystem> Scaffolder<F> {
         Ok(())
     }
 
-    /// Write mod.rs + tests/{mod,unit,integration}/mod.rs for a single module
-    /// directory. Shared by both the standard mirrored modules and
-    /// custom-tree nodes.
+    /// Write mod.rs + tests/{unit,integration}/mod.rs for a single module
+    /// directory.
     fn write_module_with_tests(
         &self,
         base: &Path,

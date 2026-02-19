@@ -21,7 +21,34 @@ pub struct ReadmeConfig {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct WorkspaceMetadata {
+    pub version: String,
+    pub edition: String,
+    pub description: String,
+    pub license: String,
+    pub repository: String,
+    pub keywords: Vec<String>,
+    pub categories: Vec<String>,
+}
+
+impl Default for WorkspaceMetadata {
+    fn default() -> Self {
+        Self {
+            version: "0.1.0".to_string(),
+            edition: "2024".to_string(),
+            description: String::new(),
+            license: "MIT".to_string(),
+            repository: String::new(),
+            keywords: vec![],
+            categories: vec![],
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Config {
+    #[serde(default)]
+    pub workspace: WorkspaceMetadata,
     #[serde(default = "default_projects")]
     pub projects: Vec<String>,
     #[serde(default = "default_features")]
@@ -101,6 +128,7 @@ impl Config {
         });
 
         Self {
+            workspace: WorkspaceMetadata::default(),
             projects,
             features,
             packages,

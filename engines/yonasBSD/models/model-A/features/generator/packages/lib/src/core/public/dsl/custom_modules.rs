@@ -17,7 +17,6 @@ pub fn insert_custom_module(
 
     // Reject empty segments
     if parts.iter().any(|p| p.trim().is_empty()) {
-        //panic!("Invalid custom module path `{}`: empty segment", path);
         return Err(EngineError::invalid_path(path));
     }
 
@@ -29,7 +28,6 @@ pub fn insert_custom_module(
 }
 
 fn build_spec(segments: &[&str], backends: &[&str]) -> DirSpec {
-    // No nested segments: just a list of backends
     if segments.is_empty() {
         return DirSpec::List(
             backends
@@ -39,7 +37,6 @@ fn build_spec(segments: &[&str], backends: &[&str]) -> DirSpec {
         );
     }
 
-    // Start from the leaf (backends list) and wrap upwards
     let mut current = DirSpec::List(
         backends
             .iter()

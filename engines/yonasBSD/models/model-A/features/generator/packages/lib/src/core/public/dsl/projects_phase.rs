@@ -4,13 +4,14 @@ use miette::SourceSpan;
 
 use super::features_phase::FeaturesPhase;
 use crate::{
-    EngineError, ReadmeConfig,
+    EngineError, ReadmeConfig, WorkspaceMetadata,
     core::public::dsl::{DslNode, default_span, insert_custom_module},
     enums::DirSpec,
 };
 
 #[derive(Debug)]
 pub struct ProjectsPhase {
+    pub workspace: WorkspaceMetadata,
     pub projects: Vec<DslNode<String>>,
     pub features: Vec<DslNode<String>>,
     pub packages: Vec<DslNode<String>>,
@@ -29,6 +30,7 @@ impl ProjectsPhase {
     #[must_use]
     pub fn new() -> Self {
         Self {
+            workspace: WorkspaceMetadata::default(),
             projects: vec![],
             features: vec![],
             packages: vec![],
@@ -38,12 +40,18 @@ impl ProjectsPhase {
         }
     }
 
+    /// Set workspace-level metadata (version, edition, description, license,
+    /// etc.).
+    pub fn workspace(mut self, meta: WorkspaceMetadata) -> Self {
+        self.workspace = meta;
+        self
+    }
+
     pub fn add_project(mut self, name: impl Into<String>, span: SourceSpan) -> Self {
         self.projects.push(DslNode::new(name.into(), span));
         self
     }
 
-    // Convenience method for tests
     pub fn project(self, name: impl Into<String>) -> Self {
         self.add_project(name, default_span())
     }
@@ -103,9 +111,14 @@ impl ProjectsPhase {
         self
     }
 
+    pub fn extra_folder(self, folder: impl Into<String>) -> Self {
+        self.add_extra_folder(folder, default_span())
+    }
+
     #[must_use]
     pub fn next(self) -> FeaturesPhase {
         FeaturesPhase {
+            workspace: self.workspace,
             projects: self.projects,
             features: self.features,
             packages: self.packages,

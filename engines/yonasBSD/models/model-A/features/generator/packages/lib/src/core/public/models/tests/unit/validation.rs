@@ -4,6 +4,7 @@ use crate::*;
 
 fn cfg(p: Vec<&str>, f: Vec<&str>, pk: Vec<&str>) -> Config {
     Config {
+        workspace: WorkspaceMetadata::default(),
         projects: p.into_iter().map(|s| s.to_string()).collect(),
         features: f.into_iter().map(|s| s.to_string()).collect(),
         packages: pk.into_iter().map(|s| s.to_string()).collect(),

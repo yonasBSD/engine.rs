@@ -4,13 +4,14 @@ use miette::SourceSpan;
 
 use super::final_phase::FinalPhase;
 use crate::{
-    EngineError, ReadmeConfig,
+    EngineError, ReadmeConfig, WorkspaceMetadata,
     core::public::dsl::{DslNode, default_span, insert_custom_module},
     enums::DirSpec,
 };
 
 #[derive(Debug)]
 pub struct PackagesPhase {
+    pub workspace: WorkspaceMetadata,
     pub projects: Vec<DslNode<String>>,
     pub features: Vec<DslNode<String>>,
     pub packages: Vec<DslNode<String>>,
@@ -81,6 +82,10 @@ impl PackagesPhase {
         self
     }
 
+    pub fn extra_folder(self, folder: impl Into<String>) -> Self {
+        self.add_extra_folder(folder, default_span())
+    }
+
     #[must_use]
     pub const fn next(self) -> Self {
         self
@@ -89,6 +94,7 @@ impl PackagesPhase {
     #[must_use]
     pub fn finish(self) -> FinalPhase {
         FinalPhase {
+            workspace: self.workspace,
             projects: self.projects,
             features: self.features,
             packages: self.packages,

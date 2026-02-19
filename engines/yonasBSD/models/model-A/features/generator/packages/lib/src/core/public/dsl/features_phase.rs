@@ -4,13 +4,14 @@ use miette::SourceSpan;
 
 use super::packages_phase::PackagesPhase;
 use crate::{
-    EngineError, ReadmeConfig,
+    EngineError, ReadmeConfig, WorkspaceMetadata,
     core::public::dsl::{DslNode, default_span, insert_custom_module},
     enums::DirSpec,
 };
 
 #[derive(Debug)]
 pub struct FeaturesPhase {
+    pub workspace: WorkspaceMetadata,
     pub projects: Vec<DslNode<String>>,
     pub features: Vec<DslNode<String>>,
     pub packages: Vec<DslNode<String>>,
@@ -67,9 +68,6 @@ impl FeaturesPhase {
         self.add_readme(file, path, default_span())
     }
 
-    /// Add a custom module using a dotted path and a list of backends.
-    ///
-    /// Example: `"api.core"`, &["graphql", "grpc", "rest"]
     pub fn add_custom_module(
         mut self,
         path: impl AsRef<str>,
@@ -91,6 +89,7 @@ impl FeaturesPhase {
     #[must_use]
     pub fn next(self) -> PackagesPhase {
         PackagesPhase {
+            workspace: self.workspace,
             projects: self.projects,
             features: self.features,
             packages: self.packages,
