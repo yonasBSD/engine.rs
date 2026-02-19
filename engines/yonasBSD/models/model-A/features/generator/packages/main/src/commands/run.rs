@@ -73,7 +73,7 @@ pub fn cmd_run(explain: bool, quiet: bool, json: bool, debug: bool) -> io::Resul
         s.start("Executing BLAKE-3 Deep Verification...");
     }
 
-    match scaffolder.verify_integrity(manifest) {
+    match scaffolder.verify_integrity(&manifest) {
         Ok(elapsed) => {
             if json {
                 print_json_ok(&config);

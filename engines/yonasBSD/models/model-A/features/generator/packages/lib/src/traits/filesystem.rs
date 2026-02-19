@@ -14,11 +14,14 @@ use minijinja::{Environment, context};
 
 use crate::{
     core::{
-        Asset, Config, DEFAULT_README_TPL, EXTRA_TOP_LEVEL_DIRS, TPL_CARGO, TPL_MEMBER_CARGO, TPL_MOD_EXPORT,
-        TPL_MOD_TESTS,
+        Asset, Config, DEFAULT_README_TPL, EXTRA_TOP_LEVEL_DIRS, TPL_CARGO, TPL_MEMBER_CARGO,
+        TPL_MOD_EXPORT, TPL_MOD_TESTS,
     },
     enums::DirSpec,
 };
+
+// Single source of truth for the default sub-packages.
+const DEFAULT_PACKAGES: &[&str] = &["cli", "api", "webui", "lib", "testing"];
 
 pub trait FileSystem {
     fn create_dir_all(&self, path: &Path) -> io::Result<()>;
@@ -44,6 +47,55 @@ impl FileSystem for RealFS {
 }
 
 // ==========================================================
+// TEMPLATE STORE — avoids Box::leak by owning strings
+// ==========================================================
+struct TemplateStore {
+    entries: Vec<(String, String)>,
+}
+
+impl TemplateStore {
+    fn new() -> Self {
+        let mut entries = Vec::new();
+
+        for file in Asset::iter() {
+            if let Some(content) = Asset::get(&file) {
+                if let Ok(body) = std::str::from_utf8(content.data.as_ref()) {
+                    entries.push((file.to_string(), body.to_owned()));
+                }
+            }
+        }
+
+        // Internal fallbacks
+        entries.push(("internal/readme.tpl".into(), DEFAULT_README_TPL.into()));
+        entries.push(("internal/cargo.tpl".into(), TPL_CARGO.into()));
+        entries.push(("internal/member_cargo.tpl".into(), TPL_MEMBER_CARGO.into()));
+        entries.push(("internal/mod_export.tpl".into(), TPL_MOD_EXPORT.into()));
+        entries.push(("internal/mod_tests.tpl".into(), TPL_MOD_TESTS.into()));
+
+        Self {
+            entries,
+        }
+    }
+
+    /// Load all stored templates into a minijinja Environment.
+    ///
+    /// Uses `Box::leak` intentionally and only once per call, keeping the
+    /// leak surface minimal and clearly isolated here rather than scattered
+    /// through business logic.
+    fn build_env(&self) -> Environment<'static> {
+        let mut env = Environment::new();
+        for (name, body) in &self.entries {
+            let name: &'static str = Box::leak(name.clone().into_boxed_str());
+            let body: &'static str = Box::leak(body.clone().into_boxed_str());
+            // Silently skip duplicates (embedded assets take priority; internal
+            // fallbacks registered second will be no-ops if the asset exists).
+            let _ = env.add_template(name, body);
+        }
+        env
+    }
+}
+
+// ==========================================================
 // THE SCAFFOLDER ENGINE
 // ==========================================================
 pub struct Scaffolder<F: FileSystem> {
@@ -54,27 +106,7 @@ pub struct Scaffolder<F: FileSystem> {
 
 impl<F: FileSystem> Scaffolder<F> {
     pub fn new(fs: F, base_path: PathBuf) -> Self {
-        let mut env = Environment::new();
-
-        // Load all embedded templates and shared vars
-        for file in Asset::iter() {
-            if let Some(content) = Asset::get(&file) {
-                let body = std::str::from_utf8(content.data.as_ref())
-                    .unwrap()
-                    .to_owned();
-                let name: &'static str = Box::leak(file.to_string().into_boxed_str());
-                let body_str: &'static str = Box::leak(body.into_boxed_str());
-                env.add_template(name, body_str).unwrap();
-            }
-        }
-
-        // Register Internal Fallbacks
-        let _ = env.add_template("internal/readme.tpl", DEFAULT_README_TPL);
-        let _ = env.add_template("internal/cargo.tpl", TPL_CARGO);
-        let _ = env.add_template("internal/member_cargo.tpl", TPL_MEMBER_CARGO);
-        let _ = env.add_template("internal/mod_export.tpl", TPL_MOD_EXPORT);
-        let _ = env.add_template("internal/mod_tests.tpl", TPL_MOD_TESTS);
-
+        let env = TemplateStore::new().build_env();
         Self {
             fs,
             base_path,
@@ -89,9 +121,6 @@ impl<F: FileSystem> Scaffolder<F> {
     pub fn run(&self, config: &Config) -> io::Result<HashMap<PathBuf, String>> {
         let mut manifest = HashMap::new();
 
-        // Default sub-packages that always exist per feature
-        let default_packages = ["cli", "api", "lib", "testing"];
-
         // Cartesian product: projects × features × packages
         for project in &config.projects {
             let project_root = self.base_path.join(format!("engines/{project}"));
@@ -100,46 +129,18 @@ impl<F: FileSystem> Scaffolder<F> {
                 let feature_root = project_root.join(format!("models/model-A/features/{feature}"));
                 let packages_root = feature_root.join("packages");
 
-                // 1. Generate Cargo.toml for this feature
-                {
-                    // Build the members list dynamically
-                    let mut members = vec![
-                        "packages/cli".to_string(),
-                        "packages/api".to_string(),
-                        "packages/lib".to_string(),
-                        "packages/testing".to_string(),
-                    ];
+                // 1. Generate workspace Cargo.toml for this feature
+                self.write_workspace_cargo(config, &feature_root, &mut manifest)?;
 
-                    // Add custom packages
-                    for package in &config.packages {
-                        members.push(format!("packages/{}", package));
-                    }
-
-                    // Build the Cargo.toml content manually
-                    let cargo_content = format!(
-                        "[workspace]\nmembers = [\n{}\n]\nresolver = \"2\"\n",
-                        members.iter()
-                        .map(|m| format!("    \"{}\",", m))
-                        .collect::<Vec<_>>()
-                        .join("\n")
-                    );
-
-                    let cargo_path = feature_root.join("Cargo.toml");
-
-                    self.fs.create_dir_all(cargo_path.parent().unwrap())?;
-                    self.fs.write_file(&cargo_path, &cargo_content)?;
-                    manifest.insert(cargo_path, self.calculate_hash(&cargo_content));
-                }
-
-                // 2. Generate default sub-packages (cli, api, lib, testing)
-                for default_pkg in default_packages {
-                    let pkg_path = packages_root.join(default_pkg);
+                // 2. Generate default sub-packages
+                for pkg in DEFAULT_PACKAGES {
+                    let pkg_path = packages_root.join(pkg);
                     self.generate_package_structure(
                         &mut manifest,
                         config,
                         project,
                         feature,
-                        default_pkg,
+                        pkg,
                         &pkg_path,
                     )?;
                 }
@@ -162,6 +163,42 @@ impl<F: FileSystem> Scaffolder<F> {
         Ok(manifest)
     }
 
+    // ----------------------------------------------------------
+    // Workspace Cargo.toml
+    // ----------------------------------------------------------
+    fn write_workspace_cargo(
+        &self,
+        config: &Config,
+        feature_root: &Path,
+        manifest: &mut HashMap<PathBuf, String>,
+    ) -> io::Result<()> {
+        // Derive members from the single source of truth, then append custom ones
+        let members: Vec<String> = DEFAULT_PACKAGES
+            .iter()
+            .map(|p| format!("packages/{p}"))
+            .chain(config.packages.iter().map(|p| format!("packages/{p}")))
+            .collect();
+
+        let cargo_content = format!(
+            "[workspace]\nmembers = [\n{}\n]\nresolver = \"2\"\n",
+            members
+                .iter()
+                .map(|m| format!("    \"{m}\","))
+                .collect::<Vec<_>>()
+                .join("\n")
+        );
+
+        let cargo_path = feature_root.join("Cargo.toml");
+        self.fs.create_dir_all(cargo_path.parent().unwrap())?;
+        self.fs.write_file(&cargo_path, &cargo_content)?;
+        manifest.insert(cargo_path, self.calculate_hash(&cargo_content));
+
+        Ok(())
+    }
+
+    // ----------------------------------------------------------
+    // Per-package orchestration
+    // ----------------------------------------------------------
     fn generate_package_structure(
         &self,
         manifest: &mut HashMap<PathBuf, String>,
@@ -171,38 +208,45 @@ impl<F: FileSystem> Scaffolder<F> {
         package: &str,
         pkg_path: &Path,
     ) -> io::Result<()> {
-        // Context for templates
         let ctx = context!(
             project => project,
             feature => feature,
             package => package,
-            model => "model-A",
+            model   => "model-A",
         );
 
-        // 1. Generate READMEs for this project/feature/package combo
+        self.write_readmes(config, &ctx, manifest)?;
+        self.write_member_cargo(&ctx, pkg_path, manifest)?;
+        self.write_mirrored_modules(&ctx, pkg_path, manifest)?;
+        self.write_extra_dirs(config, pkg_path)?;
+
+        if let Some(spec) = config.custom_modules.get(package) {
+            self.generate_custom_tree(manifest, pkg_path, spec)?;
+        }
+
+        Ok(())
+    }
+
+    // ----------------------------------------------------------
+    // README generation
+    // ----------------------------------------------------------
+    fn write_readmes(
+        &self,
+        config: &Config,
+        ctx: &minijinja::value::Value,
+        manifest: &mut HashMap<PathBuf, String>,
+    ) -> io::Result<()> {
         for entry in &config.readmes {
-            // Resolve template name (your existing logic)
             let tpl_name = self
                 .resolve_template_name(&entry.file)
                 .unwrap_or_else(|| "internal/readme.tpl".to_string());
 
-            // Render README content
             let rendered = self
-                .env
-                .get_template(&tpl_name)
-                .unwrap()
-                .render(ctx.clone())
-                .unwrap();
+                .render_template(&tpl_name, ctx)
+                .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
 
-            // Expand template variables
-            let rendered_path = self.render_path(&entry.path, &ctx);
-
-            // Normalize the path (remove duplicate slashes, resolve .., etc.)
-            let normalized = PathBuf::from(rendered_path)
-                .components()
-                .collect::<PathBuf>();
-
-            // Anchor to base_path
+            let rendered_path = self.render_path(&entry.path, ctx);
+            let normalized: PathBuf = PathBuf::from(rendered_path).components().collect();
             let dest = self.base_path.join(normalized).join("README.md");
 
             self.fs.create_dir_all(dest.parent().unwrap())?;
@@ -210,33 +254,55 @@ impl<F: FileSystem> Scaffolder<F> {
             manifest.insert(dest, self.calculate_hash(&rendered));
         }
 
-        // 2. Base package structure (src + tests)
-        let member_cargo_path = pkg_path.join("Cargo.toml");
+        Ok(())
+    }
+
+    // ----------------------------------------------------------
+    // Member Cargo.toml + src/lib.rs
+    // ----------------------------------------------------------
+    fn write_member_cargo(
+        &self,
+        ctx: &minijinja::value::Value,
+        pkg_path: &Path,
+        manifest: &mut HashMap<PathBuf, String>,
+    ) -> io::Result<()> {
         let member_cargo_content = self
-            .env
-            .get_template("internal/member_cargo.tpl")
-            .unwrap()
-            .render(ctx.clone())
-            .unwrap();
-        self.fs.create_dir_all(&pkg_path)?;
-        self.fs.write_file(&member_cargo_path, &member_cargo_content)?;
-        manifest.insert(member_cargo_path, self.calculate_hash(&member_cargo_content));
+            .render_template("internal/member_cargo.tpl", ctx)
+            .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
+
+        let member_cargo_path = pkg_path.join("Cargo.toml");
+        self.fs.create_dir_all(pkg_path)?;
+        self.fs
+            .write_file(&member_cargo_path, &member_cargo_content)?;
+        manifest.insert(
+            member_cargo_path,
+            self.calculate_hash(&member_cargo_content),
+        );
 
         let src_dir = pkg_path.join("src");
         self.fs.create_dir_all(&src_dir)?;
 
-        let mod_path = pkg_path.join("src/lib.rs");
         let mod_content = self
-            .env
-            .get_template("internal/mod_export.tpl")
-            .unwrap()
-            .render(ctx.clone())
-            .unwrap();
+            .render_template("internal/mod_export.tpl", ctx)
+            .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
+
+        let mod_path = pkg_path.join("src/lib.rs");
         self.fs.write_file(&mod_path, &mod_content)?;
         manifest.insert(mod_path, self.calculate_hash(&mod_content));
 
-        // 3. Mirrored module generation
-        let modules = [
+        Ok(())
+    }
+
+    // ----------------------------------------------------------
+    // Mirrored modules (src/{mod}/mod.rs + test scaffolding)
+    // ----------------------------------------------------------
+    fn write_mirrored_modules(
+        &self,
+        ctx: &minijinja::value::Value,
+        pkg_path: &Path,
+        manifest: &mut HashMap<PathBuf, String>,
+    ) -> io::Result<()> {
+        const MODULES: &[&str] = &[
             "enums",
             "macros",
             "utils",
@@ -248,71 +314,85 @@ impl<F: FileSystem> Scaffolder<F> {
             "core/private",
         ];
 
-        for mod_dir in modules {
+        let t_content = self
+            .render_template("internal/mod_tests.tpl", ctx)
+            .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
+
+        for mod_dir in MODULES {
             let base = pkg_path.join(format!("src/{mod_dir}"));
-            let tests_mod = base.join("tests/mod.rs");
-            let unit_mod = base.join("tests/unit/mod.rs");
-            let integration_mod = base.join("tests/integration/mod.rs");
-
-            self.fs.create_dir_all(unit_mod.parent().unwrap())?;
-            self.fs.create_dir_all(integration_mod.parent().unwrap())?;
-
-            self.fs.write_file(&base.join("mod.rs"), "mod tests;\n")?;
-
-            let t_content = self
-                .env
-                .get_template("internal/mod_tests.tpl")
-                .unwrap()
-                .render(ctx.clone())
-                .unwrap();
-
-            self.fs.write_file(&tests_mod, &t_content)?;
-            self.fs.write_file(&unit_mod, "// Automated Unit Tests\n")?;
-            self.fs
-                .write_file(&integration_mod, "// Automated Integration Tests\n")?;
-
-            manifest.insert(tests_mod, self.calculate_hash(&t_content));
-            manifest.insert(unit_mod, self.calculate_hash("// Automated Unit Tests\n"));
-            manifest.insert(
-                integration_mod,
-                self.calculate_hash("// Automated Integration Tests\n"),
-            );
+            self.write_module_with_tests(&base, &t_content, manifest)?;
         }
 
+        // core/mod.rs re-exports its sub-modules
         let core_mod_path = pkg_path.join("src/core/mod.rs");
         let core_mod_content = "pub mod backends;\npub mod frontends;\npub mod public;\npub mod internal;\npub mod private;\n";
-        self.fs.write_file(&core_mod_path, &core_mod_content)?;
-        manifest.insert(core_mod_path, self.calculate_hash(&core_mod_content));
+        self.fs.write_file(&core_mod_path, core_mod_content)?;
+        manifest.insert(core_mod_path, self.calculate_hash(core_mod_content));
 
-        // 4. Extra directories
+        // Extra top-level dirs
         for extra in EXTRA_TOP_LEVEL_DIRS {
-            self.fs.create_dir_all(&pkg_path.join(extra))?;
-        }
-
-        // 5. Custom module expansions (JSON-like DSL)
-        if let Some(spec) = config.custom_modules.get(package) {
-            self.generate_custom_tree(manifest, pkg_path, spec)?;
-        }
-
-        // 6. Custom folders
-        for extra in &config.extra_folders {
             self.fs.create_dir_all(&pkg_path.join(extra))?;
         }
 
         Ok(())
     }
 
+    /// Write mod.rs + tests/{mod,unit,integration}/mod.rs for a single module
+    /// directory. Shared by both the standard mirrored modules and
+    /// custom-tree nodes.
+    fn write_module_with_tests(
+        &self,
+        base: &Path,
+        tests_content: &str,
+        manifest: &mut HashMap<PathBuf, String>,
+    ) -> io::Result<()> {
+        let tests_mod = base.join("tests/mod.rs");
+        let unit_mod = base.join("tests/unit/mod.rs");
+        let integration_mod = base.join("tests/integration/mod.rs");
+
+        self.fs.create_dir_all(unit_mod.parent().unwrap())?;
+        self.fs.create_dir_all(integration_mod.parent().unwrap())?;
+
+        self.fs.write_file(&base.join("mod.rs"), "mod tests;\n")?;
+        self.fs.write_file(&tests_mod, tests_content)?;
+        self.fs.write_file(&unit_mod, "// Automated Unit Tests\n")?;
+        self.fs
+            .write_file(&integration_mod, "// Automated Integration Tests\n")?;
+
+        manifest.insert(tests_mod, self.calculate_hash(tests_content));
+        manifest.insert(unit_mod, self.calculate_hash("// Automated Unit Tests\n"));
+        manifest.insert(
+            integration_mod,
+            self.calculate_hash("// Automated Integration Tests\n"),
+        );
+
+        Ok(())
+    }
+
+    // ----------------------------------------------------------
+    // Extra dirs
+    // ----------------------------------------------------------
+    fn write_extra_dirs(&self, config: &Config, pkg_path: &Path) -> io::Result<()> {
+        for extra in &config.extra_folders {
+            self.fs.create_dir_all(&pkg_path.join(extra))?;
+        }
+        Ok(())
+    }
+
+    // ----------------------------------------------------------
+    // Integrity check
+    // ----------------------------------------------------------
     pub fn verify_integrity(
         &self,
-        manifest: HashMap<PathBuf, String>,
+        manifest: &HashMap<PathBuf, String>,
     ) -> Result<Duration, Vec<String>> {
         let start = Instant::now();
         let mut errors = Vec::new();
 
         for (path, expected_hash) in manifest {
-            match self.fs.read_to_string(&path) {
+            match self.fs.read_to_string(path) {
                 Ok(content) => {
-                    if self.calculate_hash(&content) != expected_hash {
+                    if self.calculate_hash(&content) != *expected_hash {
                         errors.push(format!("Hash Mismatch: {path:?}"));
                     }
                 },
@@ -327,6 +407,9 @@ impl<F: FileSystem> Scaffolder<F> {
         }
     }
 
+    // ----------------------------------------------------------
+    // Custom tree (DSL)
+    // ----------------------------------------------------------
     fn generate_custom_tree(
         &self,
         manifest: &mut HashMap<PathBuf, String>,
@@ -357,32 +440,39 @@ impl<F: FileSystem> Scaffolder<F> {
         manifest: &mut HashMap<PathBuf, String>,
         dir: &Path,
     ) -> io::Result<()> {
+        const TESTS_CONTENT: &str = "// Tests\n";
+        const UNIT_CONTENT: &str = "// Unit Tests\n";
+        const INTEGRATION_CONTENT: &str = "// Integration Tests\n";
+
         let tests_mod = dir.join("tests/mod.rs");
         let unit_mod = dir.join("tests/unit/mod.rs");
         let integration_mod = dir.join("tests/integration/mod.rs");
 
-        // Create src + tests
         self.fs.create_dir_all(unit_mod.parent().unwrap())?;
         self.fs.create_dir_all(integration_mod.parent().unwrap())?;
 
-        // mod.rs
         self.fs
             .write_file(&dir.join("mod.rs"), "pub mod tests;\n")?;
+        self.fs.write_file(&tests_mod, TESTS_CONTENT)?;
+        self.fs.write_file(&unit_mod, UNIT_CONTENT)?;
+        self.fs.write_file(&integration_mod, INTEGRATION_CONTENT)?;
 
-        // tests
-        self.fs.write_file(&tests_mod, "// Tests\n")?;
-        self.fs.write_file(&unit_mod, "// Unit Tests\n")?;
-        self.fs
-            .write_file(&integration_mod, "// Integration Tests\n")?;
-
-        manifest.insert(tests_mod, self.calculate_hash("// Tests\n"));
-        manifest.insert(unit_mod, self.calculate_hash("// Unit Tests\n"));
-        manifest.insert(
-            integration_mod,
-            self.calculate_hash("// Integration Tests\n"),
-        );
+        manifest.insert(tests_mod, self.calculate_hash(TESTS_CONTENT));
+        manifest.insert(unit_mod, self.calculate_hash(UNIT_CONTENT));
+        manifest.insert(integration_mod, self.calculate_hash(INTEGRATION_CONTENT));
 
         Ok(())
+    }
+
+    // ----------------------------------------------------------
+    // Template helpers
+    // ----------------------------------------------------------
+    fn render_template(
+        &self,
+        name: &str,
+        ctx: &minijinja::value::Value,
+    ) -> Result<String, minijinja::Error> {
+        self.env.get_template(name)?.render(ctx.clone())
     }
 
     fn resolve_template_name(&self, name: &str) -> Option<String> {
@@ -392,10 +482,10 @@ impl<F: FileSystem> Scaffolder<F> {
         }
 
         // 2. Strip leading "templates/"
-        if let Some(stripped) = name.strip_prefix("templates/")
-            && self.env.get_template(stripped).is_ok()
-        {
-            return Some(stripped.to_string());
+        if let Some(stripped) = name.strip_prefix("templates/") {
+            if self.env.get_template(stripped).is_ok() {
+                return Some(stripped.to_string());
+            }
         }
 
         // 3. Try prefixing "readme/"
@@ -404,7 +494,7 @@ impl<F: FileSystem> Scaffolder<F> {
             return Some(prefixed);
         }
 
-        // 4. Try searching by filename only
+        // 4. Search by filename only
         let filename = name.split('/').next_back().unwrap();
         for candidate in Asset::iter() {
             if candidate.ends_with(filename) {
