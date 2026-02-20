@@ -331,7 +331,14 @@ impl<F: FileSystem> Scaffolder<F> {
 
         // core/mod.rs re-exports its sub-modules
         let core_mod_path = pkg_path.join("src/core/mod.rs");
-        let core_mod_content = "pub mod backends;\npub mod frontends;\npub mod public;\npub mod internal;\npub mod private;\n";
+        let core_mod_content = r#"pub mod backends;
+pub mod frontends;
+pub mod public;
+pub mod internal;
+pub mod private;
+
+#[allow(unused_imports)]
+pub use public::*;"#;
         self.fs.write_file(&core_mod_path, core_mod_content)?;
         manifest.insert(core_mod_path, self.calculate_hash(core_mod_content));
 

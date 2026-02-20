@@ -50,14 +50,17 @@ path = "src/lib.rs"
 [dependencies]
 {% if package != "lib" %}lib = { path = "../lib" }{% endif %}"#;
 
-pub const TPL_MOD_EXPORT: &str = r"pub mod core;
+pub const TPL_MOD_EXPORT: &str = r#"pub mod core;
 pub mod enums;
 pub mod macros;
 pub mod traits;
-pub mod utils;";
+pub mod utils;
+
+#[allow(unused_imports)]
+pub use core::*;"#;
 
 pub const TPL_MOD_TESTS: &str = "pub mod unit;\npub mod integration;\n";
 
 pub const EXTRA_TOP_LEVEL_DIRS: &[&str] = &[
-    "benches", "docs", "contrib", "scripts", "examples", "vendor",
+    "benches", "docs", "contrib", "migrations", "scripts", "examples", "vendor",
 ];
