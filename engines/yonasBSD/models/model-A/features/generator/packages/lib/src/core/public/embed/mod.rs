@@ -62,5 +62,11 @@ pub use core::*;"#;
 pub const TPL_MOD_TESTS: &str = "pub mod unit;\npub mod integration;\n";
 
 pub const EXTRA_TOP_LEVEL_DIRS: &[&str] = &[
-    "benches", "docs", "contrib", "migrations", "scripts", "examples", "vendor",
+    "benches",
+    "docs",
+    "contrib",
+    "migrations",
+    "scripts",
+    "examples",
+    "vendor",
 ];
