@@ -73,7 +73,7 @@ jobs:
 
       # Build & Package
       - name: Build Reproducible Binary
-        uses: yonasBSD/toolkit@e3156a095eb4a759778ad8ef10dfd58dd00993e6 # v1.0.0
+        uses: yonasBSD/toolkit@ac486c2659a105f3bf99cdd4e35b4e4c60a3210f # v1.0.0
         with:
           run: |
             # Set source date for reproducible builds
